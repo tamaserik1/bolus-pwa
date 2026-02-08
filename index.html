@@ -3,63 +3,94 @@
 <head>
 <meta charset="UTF-8">
 <title>Bolus varázsló</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-* { box-sizing:border-box; margin:0; padding:0; }
-html, body { height:100%; font-family:-apple-system,Arial,sans-serif; background:#f4f4f4; color:#111; transition: background 0.3s, color 0.3s; }
-body.dark { background:#121212; color:#eee; }
-body.dark input { color:#eee; border-bottom:1px solid #555; }
-body.dark .box { background:#1e1e1e; box-shadow:0 1px 3px rgba(255,255,255,0.05); }
-body.dark .insulin-unit { background:#1976d2; color:white; }
-body.dark .carb-unit { background:#388e3c; color:white; }
-body.dark .bg-unit { background:#ba68c8; color:white; }
-body.dark .tab { color:#aaa; }
-body.dark .tab.active { color:#1976d2; }
-body.dark .tab svg { stroke:#aaa; }
-body.dark .tab.active svg { stroke:#1976d2; }
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1976d2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bolus">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
+<style>
+:root {
+  --primary:#1976d2;
+  --secondary:#ccc;
+  --danger:#d32f2f;
+  --bg:#f4f4f4;
+  --bg-dark:#1e1e1e;
+  --text:#222;
+  --text-dark:#eee;
+  --insulin:#1976d2;
+  --carb:#388e3c;
+  --bg-item:#fff;
+  --bg-item-dark:#2a2a2a;
+  --border:#ccc;
+  --border-dark:#555;
+  --purple:#9c27b0;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { height:100%; width:100%; font-family:-apple-system, Arial, sans-serif; background:var(--bg); color:var(--text); }
 body { display:flex; flex-direction:column; }
 
-#splash { position:fixed; top:0; left:0; width:100%; height:100%; background:#1976d2; display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; font-weight:bold; font-size:24px; z-index:9999; }
-#splash img { width:120px; height:120px; margin-bottom:20px; }
+.dark-mode { background:var(--bg-dark); color:var(--text-dark); }
+
+#splash {
+  position:fixed; top:0; left:0; width:100%; height:100%; background:var(--primary);
+  display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; font-weight:bold; font-size:24px; z-index:9999;
+  user-select:none; animation: splashFadeOut 1.5s ease forwards; animation-delay:1.5s;
+}
+#splash img { width:120px; height:120px; margin-bottom:20px; animation: splashScale 1.5s ease forwards; }
+@keyframes splashScale { 0% { transform: scale(1); opacity:1; } 100% { transform: scale(1.1); opacity:0; } }
+@keyframes splashFadeOut { to { opacity:0; visibility:hidden; pointer-events:none; } }
 
 main { flex:1; display:flex; flex-direction:column; overflow-y:auto; padding:15px; padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
 
-h3 { font-size:18px; margin-bottom:8px; font-weight:500; }
-label { font-size:16px; margin-top:12px; display:block; font-weight:500; }
-input { width:100%; padding:10px; margin-top:6px; font-size:16px; border:none; border-bottom:1px solid #ccc; background:transparent; }
-input:focus { outline:none; border-bottom:2px solid #1976d2; }
+h3 { font-size:18px; margin-bottom:8px; }
 
-button { margin-top:12px; padding:14px; width:100%; font-size:18px; border:none; border-radius:10px; background:#1976d2; color:white; cursor:pointer; }
+label { display:block; margin-top:12px; font-size:16px; color:inherit; }
+input { width:100%; padding:12px; margin-top:6px; font-size:18px; border-radius:0; border:none; border-bottom:1px solid var(--border); background:transparent; color:inherit; }
+.dark-mode input { border-bottom:1px solid var(--border-dark); }
+
+button { margin-top:12px; padding:14px; width:100%; font-size:18px; border:none; border-radius:10px; background:var(--primary); color:white; cursor:pointer; }
 button:active { transform:scale(0.97); }
-.secondary { background:#ccc; color:black; }
-.danger { background:#d32f2f; }
-.small { font-size:14px; color:#555; }
+.secondary { background:var(--secondary); color:black; }
+.danger { background:var(--danger); }
 
-.box { background:white; padding:16px; margin-bottom:16px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.08); transition: background 0.3s, color 0.3s; }
+.box { background:var(--bg-item); padding:16px; margin-bottom:16px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.05); }
+.dark-mode .box { background:var(--bg-item-dark); box-shadow:none; }
 
-.history-item { padding:10px 0; border-bottom:1px solid #eee; font-size:16px; display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
-.insulin-unit { background:#1976d2; color:white; padding:2px 8px; border-radius:6px; font-weight:600; min-width:50px; text-align:center; }
-.carb-unit { background:#388e3c; color:white; padding:2px 8px; border-radius:6px; font-weight:600; min-width:50px; text-align:center; }
-.bg-unit { background:#8e24aa; color:white; padding:2px 8px; border-radius:6px; font-weight:600; min-width:50px; text-align:center; }
+.history-item { padding:10px 0; border-bottom:1px solid #eee; font-size:16px; line-height:1.4; display:flex; justify-content:space-between; align-items:center; }
+.dark-mode .history-item { border-bottom:1px solid #555; }
 
-#tabBar { display:flex; height:70px; border-top:1px solid #ccc; background:white; padding-bottom:env(safe-area-inset-bottom); transition: background 0.3s; }
-.tab { flex:1; text-align:center; font-size:14px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center; padding-top:6px; color:#555; cursor:pointer; }
-.tab.active { color:#1976d2; }
+.insulin-unit { background:var(--insulin); color:white; padding:2px 8px; border-radius:6px; font-weight:600; text-align:center; min-width:50px; }
+.carb-unit { background:var(--carb); color:white; padding:2px 8px; border-radius:6px; font-weight:600; text-align:center; min-width:50px; }
+.bg-unit { background:var(--purple); color:white; padding:2px 8px; border-radius:6px; font-weight:600; text-align:center; min-width:50px; }
+
+#tabBar {
+  display:flex; height:65px; border-top:1px solid var(--border); background:var(--bg-item); padding-bottom:env(safe-area-inset-bottom);
+}
+.dark-mode #tabBar { background:var(--bg-item-dark); border-top:1px solid var(--border-dark); }
+
+.tab {
+  flex:1; text-align:center; font-size:16px;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  color:#555; cursor:pointer;
+}
+.tab.active { color:var(--primary); }
+.tab span.icon { font-size:28px; margin-bottom:2px; }
 
 section { display:none; flex:1; }
 section.active { display:flex; flex-direction:column; }
 
-.settings-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee; transition: border-color 0.3s; }
-.settings-row label { font-weight:500; font-size:16px; }
-.settings-row input { width:70px; text-align:right; border:none; border-bottom:none; color:#1976d2; font-weight:600; font-size:16px; padding:0; }
+.disclaimer { font-size:14px; color:#555; margin-top:10px; }
+.dark-mode .disclaimer { color:#aaa; }
 
-.toggle { position:relative; width:50px; height:28px; background:#ccc; border-radius:14px; cursor:pointer; flex-shrink:0; }
-.toggle::after { content:''; position:absolute; width:24px; height:24px; background:white; border-radius:50%; top:2px; left:2px; transition:0.3s; }
-.toggle.active { background:#1976d2; }
-.toggle.active::after { left:24px; }
+/* SETTINGS switch */
+.switch-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
+.dark-mode .switch-row { border-bottom:1px solid var(--border-dark); }
+.switch-row label { font-size:16px; }
+.switch-row input { width:auto; transform:scale(1.2); cursor:pointer; }
 
-.disclaimer { font-size:14px; color:#555; line-height:1.4; margin-top:10px; }
 </style>
 </head>
 <body>
@@ -109,26 +140,24 @@ section.active { display:flex; flex-direction:column; }
 <section id="settings">
   <div class="box">
     <h3>Beállítások</h3>
-    <div class="settings-row">
-      <label>Szénhidrát–inzulin arány (g / 1 E)</label>
-      <input id="cr" type="number" step="0.1">
+
+    <label>Szénhidrát–inzulin arány (g / 1 E)</label>
+    <input id="cr" type="number" step="0.1">
+
+    <label>Cél vércukor (mmol/L)</label>
+    <input id="target" type="number" step="0.1">
+
+    <label>Inzulinérzékenység (mmol/L / 1 E)</label>
+    <input id="isf" type="number" step="0.1">
+
+    <label>Inzulinhatás időtartama (perc)</label>
+    <input id="duration" type="number" step="1" min="10">
+
+    <div class="switch-row">
+      <label for="darkMode">Sötét mód</label>
+      <input type="checkbox" id="darkMode">
     </div>
-    <div class="settings-row">
-      <label>Cél vércukor (mmol/L)</label>
-      <input id="target" type="number" step="0.1" value="5.5">
-    </div>
-    <div class="settings-row">
-      <label>Inzulinérzékenység (mmol/L / 1 E)</label>
-      <input id="isf" type="number" step="0.1">
-    </div>
-    <div class="settings-row">
-      <label>Inzulinhatás időtartama (perc)</label>
-      <input id="duration" type="number" step="1" min="10" value="180">
-    </div>
-    <div class="settings-row">
-      <label>Sötét mód</label>
-      <div id="darkToggle" class="toggle"></div>
-    </div>
+
     <button onclick="saveSettings()">Mentés</button>
     <button class="danger" onclick="resetAll()">MINDEN TÖRLÉSE</button>
   </div>
@@ -136,9 +165,9 @@ section.active { display:flex; flex-direction:column; }
 </main>
 
 <div id="tabBar" style="display:none;">
-  <div class="tab active" data-tab="home">🏠 Kezdőoldal</div>
-  <div class="tab" data-tab="log">📖 Napló</div>
-  <div class="tab" data-tab="settings">⚙️ Beállítások</div>
+  <div class="tab active" data-tab="home"><span class="icon">🏠</span>Kezdőoldal</div>
+  <div class="tab" data-tab="log"><span class="icon">📖</span>Napló</div>
+  <div class="tab" data-tab="settings"><span class="icon">⚙️</span>Beállítások</div>
 </div>
 
 <script>
@@ -147,14 +176,12 @@ let lastBolus = null;
 let INSULIN_DURATION = 180*60*1000;
 const HYPO_LIMIT = 4.0;
 
-function getNum(id){ const v=parseFloat($(id).value); return isNaN(v)?null:v }
-
 /* SETTINGS */
 function saveSettings(){
-  const s = { cr:getNum("cr"), target:getNum("target"), isf:getNum("isf"), duration:getNum("duration"), dark:document.body.classList.contains("dark") };
-  if(s.duration<10){ alert("Legalább 10 perc!"); return; }
-  localStorage.setItem("settings",JSON.stringify(s));
-  INSULIN_DURATION = s.duration*60*1000;
+  const crVal=getNum("cr"), targetVal=getNum("target"), isfVal=getNum("isf"), durationVal=getNum("duration");
+  if(durationVal < 10){ alert("Az inzulinhatás legalább 10 perc!"); return; }
+  localStorage.setItem("settings",JSON.stringify({cr:crVal,target:targetVal,isf:isfVal,duration:durationVal}));
+  INSULIN_DURATION = durationVal*60*1000;
   alert("Beállítások mentve");
 }
 function loadSettings(){
@@ -162,33 +189,45 @@ function loadSettings(){
   if(s.cr) cr.value=s.cr;
   if(s.target) target.value=s.target;
   if(s.isf) isf.value=s.isf;
-  if(s.duration) { duration.value=s.duration; INSULIN_DURATION = s.duration*60*1000; }
-  if(s.dark) { darkToggle.classList.add("active"); document.body.classList.add("dark"); }
+  if(s.duration){ duration.value=s.duration; INSULIN_DURATION = s.duration*60*1000; }
 }
 
 /* DARK MODE */
-const darkToggle = $("darkToggle");
-darkToggle.addEventListener("click", ()=>{
-  darkToggle.classList.toggle("active");
-  document.body.classList.toggle("dark");
+const darkToggle = $("darkMode");
+darkToggle.addEventListener("change",()=> {
+  document.body.classList.toggle("dark-mode", darkToggle.checked);
+  localStorage.setItem("darkMode", darkToggle.checked);
 });
+window.onload = () => {
+  if(localStorage.getItem("darkMode")==="true"){ darkToggle.checked=true; document.body.classList.add("dark-mode"); }
+};
 
-/* BOLUS STORAGE */
+/* STORAGE */
 function getBolusHistory(){ return JSON.parse(localStorage.getItem("boluses")||"[]"); }
-function saveBolus(units, carbs, bg){ const h=getBolusHistory(); h.push({units, carbs, bg, time:Date.now()}); localStorage.setItem("boluses",JSON.stringify(h)); }
+function saveBolus(units, carbs, bg){
+  const h=getBolusHistory();
+  h.push({units, carbs, bg, time: Date.now()});
+  localStorage.setItem("boluses",JSON.stringify(h));
+}
 
 /* IOB */
 function calcIOB(){
-  const now=Date.now(), valid=[]; let total=0, remainingMs=0;
+  const now=Date.now(), valid=[];
+  let total=0, remainingMs=0;
   getBolusHistory().forEach(b=>{
     const elapsed=now-b.time;
-    if(elapsed<INSULIN_DURATION){ const r=1-elapsed/INSULIN_DURATION; total+=b.units*r; remainingMs=Math.max(remainingMs,INSULIN_DURATION-elapsed); valid.push(b); }
+    if(elapsed<INSULIN_DURATION){
+      const r=1-elapsed/INSULIN_DURATION;
+      total+=b.units*r;
+      remainingMs=Math.max(remainingMs,INSULIN_DURATION-elapsed);
+      valid.push(b);
+    }
   });
   localStorage.setItem("boluses", JSON.stringify(valid));
   return {total, remainingMs};
 }
 
-/* CALCULATION */
+/* CALC */
 function calculate(){
   const carbs=getNum("carbs"), bg=getNum("bg"), s=JSON.parse(localStorage.getItem("settings")||"{}");
   if([carbs,bg,s.cr,s.target,s.isf].some(v=>v===null)){ alert("Hiányzó adat!"); return; }
@@ -199,18 +238,18 @@ function calculate(){
   result.innerHTML=`Étkezési: <b>${meal.toFixed(2)} E</b><br>Korrekció: <b>${corr.toFixed(2)} E</b><br><br><strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
   injectBtn.style.display = cancelBtn.style.display = "block";
 }
-function inject(){ saveBolus(lastBolus,getNum("carbs"),getNum("bg")); clearCalc(); updateIOB(); renderHistory(); renderFullHistory(); }
+function inject(){ const carbs=getNum("carbs"), bg=getNum("bg"); saveBolus(lastBolus, carbs, bg); clearCalc(); updateIOB(); renderHistory(); renderFullHistory(); }
 function cancel(){ clearCalc(); }
 function clearCalc(){ result.innerHTML=""; injectBtn.style.display = cancelBtn.style.display = "none"; }
 
+/* UI */
 function updateIOB(){ const {total, remainingMs}=calcIOB(); iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br><span class="small">Hátralévő idő: ${Math.ceil(remainingMs/60000)} perc</span>`; }
-
-function renderHistory(){ const h=getBolusHistory().slice(-10).reverse(); history.innerHTML=h.length?h.map(b=>`<div class="history-item"><span class="insulin-unit">${b.units.toFixed(2)} E</span><span class="carb-unit">${b.carbs} g CH</span><span class="bg-unit">${b.bg} mmol/L</span><span class="small">${new Date(b.time).toLocaleString()}</span></div>`).join(''):"<span class='small'>Nincs adat</span>"; }
-function renderFullHistory(){ const monthAgo=Date.now()-30*24*60*60*1000; const h=getBolusHistory().filter(b=>b.time>=monthAgo).reverse(); fullHistory.innerHTML=h.length?h.map(b=>`<div class="history-item"><span class="insulin-unit">${b.units.toFixed(2)} E</span><span class="carb-unit">${b.carbs} g CH</span><span class="bg-unit">${b.bg} mmol/L</span><span class="small">${new Date(b.time).toLocaleString()}</span></div>`).join(''):"<span class='small'>Nincs adat</span>"; }
+function renderHistory(){ const historyDiv=$("history"); const h=getBolusHistory().slice(-10).reverse(); historyDiv.innerHTML=h.length ? h.map(b=>`<div class="history-item"><span><strong><span class="insulin-unit">${b.units.toFixed(2)} E</span></strong> <span class="carb-unit">${b.carbs} g CH</span> <span class="bg-unit">${b.bg} mmol/L</span></span><span class="small">${new Date(b.time).toLocaleString()}</span></div>`).join("") : "<span class='small'>Nincs adat</span>"; }
+function renderFullHistory(){ const fullHistoryDiv=$("fullHistory"); const now=Date.now(), monthAgo=now-30*24*60*60*1000; const h=getBolusHistory().filter(b=>b.time>=monthAgo).reverse(); fullHistoryDiv.innerHTML=h.length ? h.map(b=>`<div class="history-item"><span><strong><span class="insulin-unit">${b.units.toFixed(2)} E</span></strong> <span class="carb-unit">${b.carbs} g CH</span> <span class="bg-unit">${b.bg} mmol/L</span></span><span class="small">${new Date(b.time).toLocaleString()}</span></div>`).join("") : "<span class='small'>Nincs adat</span>"; }
 
 /* TAB NAV */
 document.querySelectorAll(".tab").forEach(tab=>{
-  tab.addEventListener("click",()=>{
+  tab.addEventListener("click", ()=>{
     document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
     tab.classList.add("active");
     document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
@@ -221,16 +260,21 @@ document.querySelectorAll(".tab").forEach(tab=>{
 });
 
 function resetAll(){ if(confirm("Biztos törlöd az összes adatot?")){ localStorage.clear(); location.reload(); } }
+function getNum(id){ const v=parseFloat($(id).value); return isNaN(v)?null:v; }
 
-window.onload=()=>{
+/* INIT */
+window.onload = () => {
   loadSettings(); updateIOB(); renderHistory(); renderFullHistory();
   setInterval(updateIOB,60000);
-  const splash=document.getElementById("splash");
-  const main=document.querySelector("main");
-  const tabBar=document.getElementById("tabBar");
+
+  const splash=document.getElementById("splash"), main=document.querySelector("main"), tabBar=document.getElementById("tabBar");
   splash.addEventListener("animationend",()=>{ splash.style.display="none"; main.style.display="flex"; tabBar.style.display="flex"; });
-  setTimeout(()=>{ splash.style.display="none"; main.style.display="flex"; tabBar.style.display="flex"; }, 1500);
+
+  /* sötét mód beállítása */
+  if(localStorage.getItem("darkMode")==="true"){ darkToggle.checked=true; document.body.classList.add("dark-mode"); }
 };
+
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("./sw.js"); }
 </script>
 
 </body>
