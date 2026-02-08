@@ -9,10 +9,12 @@
 <meta name="apple-mobile-web-app-title" content="Bolus" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * {
+    box-sizing: border-box;
+    margin: 0; padding: 0;
+  }
   html, body {
-    height: 100%;
-    width: 100%;
+    height: 100%; width: 100%;
     font-family: -apple-system, Arial, sans-serif;
     background: #f4f4f4;
     color: #444;
@@ -21,9 +23,10 @@
     display: flex;
     flex-direction: column;
   }
+
+  /* Splash screen */
   #splash {
-    position: fixed;
-    top: 0; left: 0;
+    position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
     background: #1976d2;
     display: flex;
@@ -31,7 +34,7 @@
     justify-content: center;
     align-items: center;
     color: white;
-    font-weight: bold;
+    font-weight: 700;
     font-size: 24px;
     z-index: 9999;
     user-select: none;
@@ -60,7 +63,6 @@
     padding-bottom: calc(80px + env(safe-area-inset-bottom));
   }
 
-  /* Sections */
   section {
     display: none;
     flex: 1;
@@ -128,7 +130,7 @@
     color: #555;
   }
 
-  /* Box style for home and log */
+  /* Box styling */
   .box {
     background: white;
     padding: 16px;
@@ -137,38 +139,51 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.07);
   }
 
-  /* History items */
+  /* History item */
   .history-item {
     padding: 10px 0;
-    border-bottom: 1px solid #eee;
     font-size: 16px;
     line-height: 1.4;
+    display: flex;
+    align-items: center;
   }
-  .history-item:last-child {
-    border-bottom: none;
+  .history-item:not(:last-child) {
+    border-bottom: 1px solid #eee;
   }
 
+  /* Units with colored background - inzulin, CH, és BG (lila) */
+  .insulin-unit, .carb-unit, .bg-unit {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    min-width: 52px;
+    text-align: center;
+    display: inline-block;
+    user-select: none;
+  }
   .insulin-unit {
     background: #1976d2;
     color: white;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-weight: 600;
-    margin-right: 6px;
-    display: inline-block;
-    min-width: 50px;
-    text-align: center;
+    margin-right: 8px;
   }
   .carb-unit {
     background: #388e3c;
     color: white;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-weight: 600;
-    margin-left: 6px;
-    display: inline-block;
-    min-width: 50px;
-    text-align: center;
+    margin-left: 8px;
+  }
+  .bg-unit {
+    background: #9c84f0; /* lila árnyalat */
+    color: white;
+    margin-left: 8px;
+  }
+
+  /* Align units nicely in history item */
+  .history-item > div {
+    display: flex;
+    align-items: center;
+  }
+  .history-text {
+    margin-left: 8px;
   }
 
   /* Disclaimer */
@@ -180,7 +195,7 @@
     user-select: none;
   }
 
-  /* Tab bar */
+  /* TAB BAR */
   #tabBar {
     display: flex;
     height: 75px;
@@ -188,19 +203,22 @@
     background: white;
     padding-bottom: env(safe-area-inset-bottom);
     user-select: none;
+    box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
   }
   .tab {
     flex: 1;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 600;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    color: #888;
+    color: #aaa;
     cursor: pointer;
-    padding: 5px 0 8px 0;
-    font-weight: 600;
+    padding-top: 6px; /* picit feljebb */
+    letter-spacing: 0.02em;
+    user-select: none;
     transition: color 0.3s ease;
   }
   .tab.active {
@@ -208,98 +226,78 @@
   }
   .tab span.icon {
     font-size: 28px;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     user-select: none;
   }
 
-  /* Settings page styling as per your request */
-
+  /* SETTINGS page minimal */
   .settings-container {
-    padding: 0 10px;
+    padding: 0;
+    margin: 0;
     font-family: -apple-system, Arial, sans-serif;
     color: #444;
   }
-  .settings-container h4 {
-    color: #999;
-    font-weight: 600;
-    font-size: 12px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    letter-spacing: 1px;
-    user-select: none;
-  }
-  .setting-row {
+  .settings-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 0;
+    padding: 14px 0;
     border-bottom: 1px solid #ddd;
     font-size: 16px;
+    user-select: none;
   }
-  .setting-row:last-child {
+  .settings-row:last-child {
     border-bottom: none;
   }
-  .setting-row .label {
-    font-weight: 500;
+  .settings-label {
+    font-weight: 600;
     color: #444;
   }
-  .setting-row .value {
+  .settings-value {
     color: #1976d2;
-    font-weight: 600;
-    cursor: default;
-    user-select: text;
-  }
-  .setting-row .value.clickable {
-    cursor: pointer;
-    user-select: none;
-    text-decoration: underline;
-  }
-  .toggle-row .label {
-    flex: 1;
+    font-weight: 700;
   }
 
-  /* Toggle switch style */
+  /* Toggle switch minimal */
   .switch {
     position: relative;
     display: inline-block;
-    width: 44px;
-    height: 24px;
+    width: 40px;
+    height: 22px;
   }
   .switch input {
     opacity: 0;
-    width: 0;
-    height: 0;
+    width: 0; height: 0;
   }
   .slider {
     position: absolute;
     cursor: pointer;
-    top: 2px;
-    left: 2px;
-    right: 2px;
-    bottom: 2px;
+    top: 1px;
+    left: 1px;
+    right: 1px;
+    bottom: 1px;
     background-color: #ccc;
     transition: 0.3s;
-    border-radius: 12px;
+    border-radius: 11px;
   }
   .slider:before {
     position: absolute;
     content: "";
-    height: 20px;
-    width: 20px;
+    height: 18px;
+    width: 18px;
     left: 2px;
     bottom: 2px;
     background-color: white;
     transition: 0.3s;
     border-radius: 50%;
-    box-shadow: 0 0 2px rgba(0,0,0,0.15);
+    box-shadow: 0 0 2px rgba(0,0,0,0.12);
   }
   input:checked + .slider {
     background-color: #1976d2;
   }
   input:checked + .slider:before {
-    transform: translateX(20px);
+    transform: translateX(18px);
   }
-
 </style>
 </head>
 <body>
@@ -351,43 +349,35 @@
   <!-- SETTINGS -->
   <section id="settings">
     <div class="settings-container">
-      <h4>Inzulinbeállítások</h4>
-
-      <div class="setting-row">
-        <span class="label">Kiszámított maximális dózis</span>
-        <span class="value clickable" onclick="alert('Ez az összes inzulin maximális dózisa, beállítás később.')">30 E</span>
+      <div class="settings-row">
+        <span class="settings-label">Kiszámított maximális dózis</span>
+        <span class="settings-value">30 E</span>
       </div>
-
-      <div class="setting-row">
-        <span class="label">Inzulinhatás időtartama</span>
-        <span class="value">2 ó 45 p</span>
+      <div class="settings-row">
+        <span class="settings-label">Inzulinhatás időtartama</span>
+        <span class="settings-value">2 ó 45 p</span>
       </div>
-
-      <div class="setting-row toggle-row">
-        <span class="label">Napszakbeállítások</span>
+      <div class="settings-row">
+        <span class="settings-label">Napszakbeállítások</span>
         <label class="switch">
           <input type="checkbox" id="dayPeriodToggle" />
           <span class="slider"></span>
         </label>
       </div>
-
-      <div class="setting-row">
-        <span class="label">Glükóz célértéke</span>
-        <span class="value">7 mmol/l</span>
+      <div class="settings-row">
+        <span class="settings-label">Glükóz célértéke</span>
+        <span class="settings-value">7 mmol/l</span>
       </div>
-
-      <div class="setting-row">
-        <span class="label">Inzulinérzékenységi tényező</span>
-        <span class="value">1,0 mmol/l/E</span>
+      <div class="settings-row">
+        <span class="settings-label">Inzulinérzékenységi tényező</span>
+        <span class="settings-value">1,0 mmol/l/E</span>
       </div>
-
-      <div class="setting-row">
-        <span class="label">Inzulin-szénhidrát arány</span>
-        <span class="value">7,0 g/E</span>
+      <div class="settings-row">
+        <span class="settings-label">Inzulin-szénhidrát arány</span>
+        <span class="settings-value">7,0 g/E</span>
       </div>
-
-      <div class="setting-row toggle-row">
-        <span class="label">Aktív inzulin kijelzése</span>
+      <div class="settings-row">
+        <span class="settings-label">Aktív inzulin kijelzése</span>
         <label class="switch">
           <input type="checkbox" id="activeInsulinToggle" checked />
           <span class="slider"></span>
@@ -398,9 +388,9 @@
 </main>
 
 <div id="tabBar" style="display:none;">
-  <div class="tab active" data-tab="home"><span class="icon">🏠</span>Kezdőoldal</div>
-  <div class="tab" data-tab="log"><span class="icon">📖</span>Napló</div>
-  <div class="tab" data-tab="settings"><span class="icon">⚙️</span>Beállítások</div>
+  <div class="tab active" data-tab="home"><span class="icon">🏠</span>KEZDŐOLDAL</div>
+  <div class="tab" data-tab="log"><span class="icon">📖</span>NAPLÓ</div>
+  <div class="tab" data-tab="settings"><span class="icon">⚙️</span>BEÁLLÍTÁSOK</div>
 </div>
 
 <script>
@@ -409,7 +399,6 @@
   let INSULIN_DURATION = 180 * 60 * 1000;
   const HYPO_LIMIT = 4.0;
 
-  /* SETTINGS */
   function saveSettings() {
     const crVal = getNum("cr"),
       targetVal = getNum("target"),
@@ -439,7 +428,6 @@
     }
   }
 
-  /* STORAGE */
   function getBolusHistory() {
     return JSON.parse(localStorage.getItem("boluses") || "[]");
   }
@@ -449,7 +437,6 @@
     localStorage.setItem("boluses", JSON.stringify(h));
   }
 
-  /* IOB */
   function calcIOB() {
     const now = Date.now(),
       valid = [];
@@ -468,7 +455,6 @@
     return { total, remainingMs };
   }
 
-  /* CALC */
   function calculate() {
     const carbs = getNum("carbs"),
       bg = getNum("bg"),
@@ -506,7 +492,6 @@
     injectBtn.style.display = cancelBtn.style.display = "none";
   }
 
-  /* UI */
   function updateIOB() {
     const { total, remainingMs } = calcIOB();
     iob.innerHTML = `<strong>${total.toFixed(2)} E</strong><br><span class="small">Hátralévő idő: ${Math.ceil(
@@ -521,10 +506,11 @@
       ? h
           .map(
             (b) => `<div class="history-item">
-        <strong><span class="insulin-unit">${b.units.toFixed(2)} E</span></strong> –
-        <span class="carb-unit">${b.carbs} g CH</span>, BG: ${b.bg} mmol/L<br>
-        <span class="small">${new Date(b.time).toLocaleString()}</span>
-      </div>`
+          <strong><span class="insulin-unit">${b.units.toFixed(2)} E</span></strong> –
+          <span class="carb-unit">${b.carbs} g CH</span>
+          <span class="bg-unit">${b.bg} mmol/L</span><br>
+          <span class="small">${new Date(b.time).toLocaleString()}</span>
+        </div>`
           )
           .join("")
       : "<span class='small'>Nincs adat</span>";
@@ -532,51 +518,69 @@
 
   function renderFullHistory() {
     const fullHistoryDiv = $("fullHistory");
-    const h = getBolusHistory().slice().reverse();
+    const now = Date.now(),
+      monthAgo = now - 30 * 24 * 60 * 60 * 1000;
+    const h = getBolusHistory().filter((b) => b.time >= monthAgo).reverse();
     fullHistoryDiv.innerHTML = h.length
       ? h
           .map(
             (b) => `<div class="history-item">
-        <strong><span class="insulin-unit">${b.units.toFixed(2)} E</span></strong> –
-        <span class="carb-unit">${b.carbs} g CH</span>, BG: ${b.bg} mmol/L<br>
-        <span class="small">${new Date(b.time).toLocaleString()}</span>
-      </div>`
+          <strong><span class="insulin-unit">${b.units.toFixed(2)} E</span></strong> –
+          <span class="carb-unit">${b.carbs} g CH</span>
+          <span class="bg-unit">${b.bg} mmol/L</span><br>
+          <span class="small">${new Date(b.time).toLocaleString()}</span>
+        </div>`
           )
           .join("")
       : "<span class='small'>Nincs adat</span>";
   }
 
   function getNum(id) {
-    const val = parseFloat($(id)?.value);
-    return isNaN(val) ? null : val;
+    const v = parseFloat($(id)?.value);
+    return isNaN(v) ? null : v;
   }
 
-  /* TABS */
-  const tabs = document.querySelectorAll("#tabBar .tab");
-  tabs.forEach((tab) =>
+  /* TAB NAV */
+  document.querySelectorAll(".tab").forEach((tab) => {
     tab.addEventListener("click", () => {
-      tabs.forEach((t) => t.classList.remove("active"));
+      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
-      const tabName = tab.dataset.tab;
-      document.querySelectorAll("main > section").forEach((sec) => {
-        sec.classList.toggle("active", sec.id === tabName);
-      });
-    })
-  );
+      document.querySelectorAll("section").forEach((s) => s.classList.remove("active"));
+      document.getElementById(tab.dataset.tab).classList.add("active");
+      if (tab.dataset.tab === "home") renderHistory();
+      if (tab.dataset.tab === "log") renderFullHistory();
+    });
+  });
 
-  /* INITIALIZATION */
+  function resetAll() {
+    if (confirm("Biztos törlöd az összes adatot?")) {
+      localStorage.clear();
+      location.reload();
+    }
+  }
+
+  /* INIT */
   window.onload = () => {
-    setTimeout(() => {
-      document.getElementById("splash").style.display = "none";
-      document.querySelector("main").style.display = "flex";
-      document.getElementById("tabBar").style.display = "flex";
+    loadSettings();
+    updateIOB();
+    renderHistory();
+    renderFullHistory();
+    setInterval(updateIOB, 60000);
 
-      loadSettings();
-      renderHistory();
-      renderFullHistory();
-      updateIOB();
-    }, 2000);
+    const splash = document.getElementById("splash"),
+      main = document.querySelector("main"),
+      tabBar = document.getElementById("tabBar");
+    splash.addEventListener("animationend", () => {
+      splash.style.display = "none";
+      main.style.display = "flex";
+      tabBar.style.display = "flex";
+    });
   };
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js");
+  }
 </script>
+
 </body>
 </html>
