@@ -1,7 +1,7 @@
 {
 "name": "Bolus varázsló",
 "short_name": "Bolus",
-"start_url": "index.html",
+"start_url": "/bolus-pwa/",
 "display": "standalone",
 "background_color": "#f4f4f4",
 "theme_color": "#1976d2",
@@ -18,3 +18,4 @@
 }
 ]
 }
+
