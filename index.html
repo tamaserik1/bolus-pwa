@@ -1,238 +1,622 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Bolus varázsló</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1976d2">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Bolus">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#1976d2" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Bolus" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="manifest" href="manifest.json" />
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{
-  height:100%;width:100%;
-  font-family:-apple-system, BlinkMacSystemFont, Arial, sans-serif;
-  background:#f2f2f7;color:#111;
-}
-body{display:flex;flex-direction:column}
+  /* Reset & alap */
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  html, body {
+    height: 100%;
+    width: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    background: #f4f6fb;
+    color: #222;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
 
-/* DARK MODE */
-body.dark{
-  background:#000;color:#fff;
-}
-body.dark .card{background:#1c1c1e}
-body.dark input{background:#2c2c2e;color:white;border:none}
-body.dark .tabBar{background:#1c1c1e;border-color:#333}
+  /* Splash */
+  #splash {
+    position: fixed;
+    inset: 0;
+    background: #1976d2;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+    user-select: none;
+    z-index: 9999;
+    animation: splashFadeOut 1.5s ease forwards;
+    animation-delay: 1.5s;
+  }
+  #splash img {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1rem;
+    animation: splashScale 1.5s ease forwards;
+  }
+  @keyframes splashScale {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.1);
+      opacity: 0;
+    }
+  }
+  @keyframes splashFadeOut {
+    to {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+  }
 
-/* SPLASH */
-#splash{
-  position:fixed;inset:0;background:#1976d2;
-  display:flex;align-items:center;justify-content:center;
-  color:white;font-size:22px;font-weight:600;z-index:10;
-  animation:fadeOut 1.5s ease forwards;animation-delay:1.2s;
-}
-@keyframes fadeOut{to{opacity:0;visibility:hidden}}
+  /* Main layout */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 1rem;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+  section {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+  }
+  section.active {
+    display: flex;
+  }
 
-/* LAYOUT */
-main{
-  flex:1;overflow-y:auto;
-  padding:16px;
-  padding-bottom:90px;
-}
-h3{
-  font-size:13px;
-  letter-spacing:.04em;
-  color:#8e8e93;
-  margin-bottom:8px;
-}
+  /* Boxes */
+  .box {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.08);
+  }
 
-/* CARD */
-.card{
-  background:white;
-  border-radius:18px;
-  padding:16px;
-  margin-bottom:16px;
-}
+  /* Headings */
+  h3 {
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin-bottom: 0.5rem;
+    color: #1976d2;
+  }
 
-/* INPUT */
-label{
-  font-size:14px;
-  color:#8e8e93;
-  margin-top:12px;
-  display:block;
-}
-input{
-  width:100%;
-  padding:14px;
-  border-radius:14px;
-  border:none;
-  background:#eef0f6;
-  font-size:18px;
-  margin-top:6px;
-}
+  /* Form elements */
+  label {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-top: 0.75rem;
+    color: #444;
+    display: block;
+  }
+  input[type="number"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1.125rem;
+    border-radius: 10px;
+    border: 1.5px solid #ccc;
+    margin-top: 0.25rem;
+    background: #f9fbff;
+    transition: border-color 0.2s ease;
+  }
+  input[type="number"]:focus {
+    outline: none;
+    border-color: #1976d2;
+    background: #fff;
+  }
+  button {
+    margin-top: 1rem;
+    background: #1976d2;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: 0.85rem;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    user-select: none;
+  }
+  button:active {
+    background-color: #135bb5;
+    transform: scale(0.97);
+  }
+  button.secondary {
+    background: #ccc;
+    color: #222;
+  }
+  button.danger {
+    background: #d32f2f;
+    color: white;
+  }
+  button.danger:active {
+    background: #b02727;
+  }
 
-/* BUTTON */
-button{
-  width:100%;
-  padding:14px;
-  margin-top:14px;
-  border-radius:14px;
-  border:none;
-  font-size:18px;
-  background:#0a84ff;
-  color:white;
-}
-.secondary{background:#d1d1d6;color:black}
-.danger{background:#ff453a}
+  /* Result text */
+  #result {
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+  }
 
-/* HISTORY */
-.history-item{
-  padding:10px 0;
-  border-bottom:1px solid #e5e5ea;
-  font-size:15px;
-}
-.small{font-size:13px;color:#8e8e93}
+  /* Insulin / carb units */
+  .insulin-unit {
+    background: #1976d2;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    margin-right: 8px;
+    min-width: 55px;
+    display: inline-block;
+    text-align: center;
+  }
+  .carb-unit {
+    background: #388e3c;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    margin-left: 8px;
+    min-width: 55px;
+    display: inline-block;
+    text-align: center;
+  }
 
-/* TAB BAR */
-.tabBar{
-  height:70px;
-  display:flex;
-  border-top:1px solid #ccc;
-  background:white;
-}
-.tab{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  font-size:12px;
-  color:#8e8e93;
-}
-.tab.active{color:#0a84ff}
-.tab svg{width:22px;height:22px;margin-bottom:4px}
+  /* History items */
+  .history-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: #555;
+  }
+  .history-item:last-child {
+    border-bottom: none;
+  }
+  .small {
+    font-size: 0.85rem;
+    color: #666;
+  }
 
-/* SETTINGS LIST */
-.settings-row{
-  display:flex;
-  align-items:center;
-  padding:14px 0;
-  border-bottom:1px solid #e5e5ea;
-}
-.settings-row:last-child{border:none}
-.settings-label{flex:1}
-.settings-value{color:#0a84ff;font-weight:500}
+  /* Tab bar */
+  #tabBar {
+    display: flex;
+    height: 65px;
+    background: white;
+    border-top: 1px solid #ddd;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab {
+    flex: 1;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 600;
+    color: #666;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: color 0.25s ease;
+  }
+  .tab span.icon {
+    font-size: 26px;
+    margin-bottom: 2px;
+    line-height: 1;
+  }
+  .tab.active {
+    color: #1976d2;
+  }
 
-/* SWITCH */
-.switch{position:relative;width:46px;height:28px}
-.switch input{display:none}
-.slider{
-  position:absolute;inset:0;
-  background:#ccc;border-radius:999px;
-}
-.slider:before{
-  content:"";position:absolute;
-  width:22px;height:22px;
-  background:white;border-radius:50%;
-  top:3px;left:3px;
-  transition:.2s;
-}
-.switch input:checked + .slider{
-  background:#34c759;
-}
-.switch input:checked + .slider:before{
-  transform:translateX(18px);
-}
+  /* Disclaimer */
+  .disclaimer {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.4;
+    margin-top: 1rem;
+  }
+
+  /* Dark mode */
+  @media (prefers-color-scheme: dark) {
+    html, body {
+      background: #121212;
+      color: #e0e0e0;
+    }
+    main {
+      background: #181818;
+    }
+    .box {
+      background: #1e1e1e;
+      box-shadow: 0 2px 6px rgb(0 0 0 / 0.9);
+    }
+    input[type="number"] {
+      background: #2b2b2b;
+      border-color: #444;
+      color: #eee;
+    }
+    input[type="number"]:focus {
+      border-color: #4a90e2;
+      background: #3a3a3a;
+    }
+    button {
+      background: #4a90e2;
+      color: white;
+    }
+    button:active {
+      background-color: #3a73c2;
+    }
+    button.secondary {
+      background: #555;
+      color: #ddd;
+    }
+    button.danger {
+      background: #c94c4c;
+    }
+    button.danger:active {
+      background: #a93b3b;
+    }
+    #tabBar {
+      background: #222;
+      border-top: 1px solid #444;
+    }
+    .tab {
+      color: #bbb;
+    }
+    .tab.active {
+      color: #4a90e2;
+    }
+    .insulin-unit {
+      background: #4a90e2;
+    }
+    .carb-unit {
+      background: #388e3c;
+    }
+    .disclaimer {
+      color: #bbb;
+    }
+  }
 </style>
 </head>
-
 <body>
 
-<div id="splash">Bolus varázsló</div>
+<!-- Splash -->
+<div id="splash">
+  <img src="icon-512.png" alt="Bolus ikon" />
+  Betöltés...
+</div>
 
-<main style="display:none">
-
-<section id="home" class="active">
-
-  <div class="card">
-    <h3>SZÁMÍTÁS</h3>
-    <label>Szénhidrát (g)</label>
-    <input id="carbs" type="number">
-    <label>Vércukor (mmol/L)</label>
-    <input id="bg" type="number" step="0.1">
-    <button onclick="calculate()">Számolás</button>
-    <div id="result"></div>
-    <button id="injectBtn" style="display:none" onclick="inject()">Beadás</button>
-    <button id="cancelBtn" class="secondary" style="display:none" onclick="cancel()">Mégse</button>
-  </div>
-
-  <div class="card">
-    <h3>AKTÍV INZULIN</h3>
-    <div id="iob"></div>
-  </div>
-
-  <div class="card">
-    <h3>ELŐZMÉNYEK</h3>
-    <div id="history"></div>
-  </div>
-
-</section>
-
-<section id="log">
-  <div class="card">
-    <h3>NAPLÓ (30 nap)</h3>
-    <div id="fullHistory"></div>
-  </div>
-</section>
-
-<section id="settings">
-  <div class="card">
-    <h3>BEÁLLÍTÁSOK</h3>
-
-    <div class="settings-row">
-      <div class="settings-label">Cél vércukor</div>
-      <input id="target" type="number" step="0.1">
-      <div class="settings-value">mmol/L</div>
+<!-- Main -->
+<main style="display:none;">
+  <!-- Kezdőlap -->
+  <section id="home" class="active">
+    <div class="box">
+      <h3>Számítás</h3>
+      <label for="carbs">Szénhidrát (g)</label>
+      <input id="carbs" type="number" inputmode="numeric" min="0" />
+      <label for="bg">Aktuális vércukor (mmol/L)</label>
+      <input id="bg" type="number" step="0.1" inputmode="decimal" min="0" />
+      <button id="calcBtn">Számolás</button>
+      <div id="result" aria-live="polite"></div>
+      <button id="injectBtn" style="display:none;">Beadás</button>
+      <button id="cancelBtn" class="secondary" style="display:none;">Mégse</button>
     </div>
 
-    <div class="settings-row">
-      <div class="settings-label">Inzulinérzékenység</div>
-      <input id="isf" type="number" step="0.1">
-      <div class="settings-value">mmol/E</div>
+    <div class="box">
+      <h3>Aktív inzulin</h3>
+      <div id="iob">0.00 E</div>
     </div>
 
-    <div class="settings-row">
-      <div class="settings-label">CH arány</div>
-      <input id="cr" type="number" step="0.1">
-      <div class="settings-value">g/E</div>
+    <div class="box">
+      <h3>Előzmények (utolsó 10)</h3>
+      <div id="history"><span class="small">Nincs adat</span></div>
     </div>
 
-    <div class="settings-row">
-      <div class="settings-label">Dark mode</div>
-      <label class="switch">
-        <input type="checkbox" onchange="document.body.classList.toggle('dark',this.checked)">
-        <span class="slider"></span>
-      </label>
+    <div class="box disclaimer">
+      Ez az alkalmazás nem minősül orvosi eszköznek.<br />
+      A számítások tájékoztató jellegűek, nem helyettesítik az orvosi döntést.
     </div>
+  </section>
 
-    <button onclick="saveSettings()">Mentés</button>
-    <button class="danger" onclick="resetAll()">MINDEN TÖRLÉSE</button>
-  </div>
-</section>
+  <!-- Napló -->
+  <section id="log">
+    <div class="box">
+      <h3>Előzmények (1 hónap)</h3>
+      <div id="fullHistory"><span class="small">Nincs adat</span></div>
+    </div>
+  </section>
 
+  <!-- Beállítások -->
+  <section id="settings">
+    <div class="box">
+      <h3>Beállítások</h3>
+      <label for="cr">Szénhidrát–inzulin arány (g / 1 E)</label>
+      <input id="cr" type="number" step="0.1" min="0" />
+      <label for="target">Cél vércukor (mmol/L)</label>
+      <input id="target" type="number" step="0.1" min="0" value="5.5" />
+      <label for="isf">Inzulinérzékenység (mmol/L / 1 E)</label>
+      <input id="isf" type="number" step="0.1" min="0" />
+      <label for="duration">Inzulinhatás időtartama (perc)</label>
+      <input id="duration" type="number" step="1" min="10" value="180" />
+      <button id="saveSettingsBtn">Mentés</button>
+      <button id="resetBtn" class="danger">MINDEN TÖRLÉSE</button>
+    </div>
+  </section>
 </main>
 
-<div class="tabBar" style="display:none">
-  <div class="tab active" data-tab="home">🏠<div>Kezdőlap</div></div>
-  <div class="tab" data-tab="log">📖<div>Napló</div></div>
-  <div class="tab" data-tab="settings">⚙️<div>Beállítások</div></div>
+<!-- Tab bar -->
+<div id="tabBar" style="display:none;">
+  <div class="tab active" data-tab="home"><span class="icon">🏠</span>Kezdőlap</div>
+  <div class="tab" data-tab="log"><span class="icon">📖</span>Napló</div>
+  <div class="tab" data-tab="settings"><span class="icon">⚙️</span>Beállítások</div>
 </div>
 
 <script>
-/* A TELJES JS LOGIKA VÁLTOZATLAN – ugyanaz, amit küldtél */
-</script>
+  // Shortcut function
+  const $ = id => document.getElementById(id);
 
+  let lastBolus = null;
+  let INSULIN_DURATION = 180 * 60 * 1000; // alap 180 perc
+  const HYPO_LIMIT = 4.0;
+
+  // Betöltéskor beállítások olvasása
+  function loadSettings() {
+    const s = JSON.parse(localStorage.getItem("settings") || "{}");
+    if (s.cr !== undefined) $("cr").value = s.cr;
+    if (s.target !== undefined) $("target").value = s.target;
+    if (s.isf !== undefined) $("isf").value = s.isf;
+    if (s.duration !== undefined) {
+      $("duration").value = s.duration;
+      INSULIN_DURATION = s.duration * 60 * 1000;
+    } else {
+      INSULIN_DURATION = 180 * 60 * 1000;
+    }
+  }
+
+  // Mentés
+  function saveSettings() {
+    const crVal = getNum("cr"),
+      targetVal = getNum("target"),
+      isfVal = getNum("isf"),
+      durationVal = getNum("duration");
+    if (
+      crVal === null ||
+      targetVal === null ||
+      isfVal === null ||
+      durationVal === null
+    ) {
+      alert("Kérlek tölts ki minden beállítást!");
+      return;
+    }
+    if (durationVal < 10) {
+      alert("Az inzulinhatás időtartama legalább 10 perc!");
+      return;
+    }
+    localStorage.setItem(
+      "settings",
+      JSON.stringify({
+        cr: crVal,
+        target: targetVal,
+        isf: isfVal,
+        duration: durationVal,
+      })
+    );
+    INSULIN_DURATION = durationVal * 60 * 1000;
+    alert("Beállítások mentve");
+  }
+
+  // Törlés
+  function resetAll() {
+    if (confirm("Biztos törlöd az összes adatot?")) {
+      localStorage.clear();
+      location.reload();
+    }
+  }
+
+  // Segéd: számérték
+  function getNum(id) {
+    const v = parseFloat($(id).value);
+    return isNaN(v) ? null : v;
+  }
+
+  // Előzmények tárolása
+  function getBolusHistory() {
+    return JSON.parse(localStorage.getItem("boluses") || "[]");
+  }
+  function saveBolus(units, carbs, bg) {
+    const h = getBolusHistory();
+    h.push({ units, carbs, bg, time: Date.now() });
+    localStorage.setItem("boluses", JSON.stringify(h));
+  }
+
+  // Aktív inzulin (IOB) számítás
+  function calcIOB() {
+    const now = Date.now(),
+      valid = [];
+    let total = 0,
+      remainingMs = 0;
+    getBolusHistory().forEach((b) => {
+      const elapsed = now - b.time;
+      if (elapsed < INSULIN_DURATION) {
+        const r = 1 - elapsed / INSULIN_DURATION;
+        total += b.units * r;
+        remainingMs = Math.max(remainingMs, INSULIN_DURATION - elapsed);
+        valid.push(b);
+      }
+    });
+    localStorage.setItem("boluses", JSON.stringify(valid));
+    return { total, remainingMs };
+  }
+
+  // Számítás gomb esemény
+  function calculate() {
+    const carbs = getNum("carbs"),
+      bg = getNum("bg"),
+      s = JSON.parse(localStorage.getItem("settings") || "{}");
+
+    if (
+      carbs === null ||
+      bg === null ||
+      s.cr === undefined ||
+      s.target === undefined ||
+      s.isf === undefined
+    ) {
+      alert("Hiányzó adat!");
+      return;
+    }
+
+    const { total: iob } = calcIOB();
+
+    const meal = carbs / s.cr;
+    // korrekció csak, ha vércukor nem hipó alatt
+    const corr = bg >= HYPO_LIMIT ? Math.max(0, (bg - s.target) / s.isf - iob) : 0;
+
+    lastBolus = meal + corr;
+
+    $("result").innerHTML = `
+      Étkezési: <b>${meal.toFixed(2)} E</b><br>
+      Korrekció: <b>${corr.toFixed(2)} E</b><br><br>
+      <strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>
+    `;
+
+    $("injectBtn").style.display = $("cancelBtn").style.display = "block";
+  }
+
+  // Beadás mentése
+  function inject() {
+    const carbs = getNum("carbs"),
+      bg = getNum("bg");
+    saveBolus(lastBolus, carbs, bg);
+    clearCalc();
+    updateIOB();
+    renderHistory();
+    renderFullHistory();
+  }
+
+  // Számolás törlése
+  function cancel() {
+    clearCalc();
+  }
+  function clearCalc() {
+    $("result").innerHTML = "";
+    $("injectBtn").style.display = $("cancelBtn").style.display = "none";
+  }
+
+  // UI update aktív inzulinra
+  function updateIOB() {
+    const { total, remainingMs } = calcIOB();
+    $("iob").innerHTML = `<strong>${total.toFixed(2)} E</strong><br><span class="small">Hátralévő idő: ${Math.ceil(
+      remainingMs / 60000
+    )} perc</span>`;
+  }
+
+  // Utolsó 10 előzmény kirajzolása
+  function renderHistory() {
+    const historyDiv = $("history");
+    const h = getBolusHistory().slice(-10).reverse();
+    historyDiv.innerHTML = h.length
+      ? h
+          .map(
+            (b) => `<div class="history-item">
+          <strong><span class="insulin-unit">${b.units.toFixed(2)} E</span></strong> –
+          <span class="carb-unit">${b.carbs} g CH</span>, BG: ${b.bg} mmol/L<br>
+          <span class="small">${new Date(b.time).toLocaleString()}</span>
+        </div>`
+          )
+          .join("")
+      : "<span class='small'>Nincs adat</span>";
+  }
+
+  // Teljes havi előzmények kirajzolása
+  function renderFullHistory() {
+    const fullHistoryDiv = $("fullHistory");
+    const now = Date.now(),
+      monthAgo = now - 30 * 24 * 60 * 60 * 1000;
+    const h = getBolusHistory().filter((b) => b.time >= monthAgo).reverse();
+    fullHistoryDiv.innerHTML = h.length
+      ? h
+          .map(
+            (b) => `<div class="history-item">
+          <strong><span class="insulin-unit">${b.units.toFixed(2)} E</span></strong> –
+          <span class="carb-unit">${b.carbs} g CH</span>, BG: ${b.bg} mmol/L<br>
+          <span class="small">${new Date(b.time).toLocaleString()}</span>
+        </div>`
+          )
+          .join("")
+      : "<span class='small'>Nincs adat</span>";
+  }
+
+  // Tab váltás kezelése
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+      document.querySelectorAll("section").forEach((s) => s.classList.remove("active"));
+      document.getElementById(tab.dataset.tab).classList.add("active");
+      if (tab.dataset.tab === "home") renderHistory();
+      if (tab.dataset.tab === "log") renderFullHistory();
+    });
+  });
+
+  // Gombok eseményei
+  window.onload = () => {
+    loadSettings();
+    updateIOB();
+    renderHistory();
+    renderFullHistory();
+    setInterval(updateIOB, 60000);
+
+    const splash = $("splash"),
+      main = document.querySelector("main"),
+      tabBar = $("tabBar");
+
+    splash.addEventListener("animationend", () => {
+      splash.style.display = "none";
+      main.style.display = "flex";
+      tabBar.style.display = "flex";
+    });
+
+    $("calcBtn").onclick = calculate;
+    $("injectBtn").onclick = inject;
+    $("cancelBtn").onclick = cancel;
+    $("saveSettingsBtn").onclick = saveSettings;
+    $("resetBtn").onclick = resetAll;
+  };
+
+  // Szolgáltató munkás regisztrálása, ha támogatott
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js");
+  }
+</script>
 </body>
 </html>
