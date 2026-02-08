@@ -24,12 +24,17 @@ body { display:flex; flex-direction:column; }
 @keyframes splashScale { 0% { transform: scale(1); opacity:1; } 100% { transform: scale(1.1); opacity:0; } }
 @keyframes splashFadeOut { to { opacity:0; visibility:hidden; pointer-events:none; } }
 
-main { flex:1; display:flex; flex-direction:column; overflow-y:auto; padding:15px; padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+section { display:none; flex:1; flex-direction:column; overflow-y:auto; padding:15px; padding-bottom:calc(80px + env(safe-area-inset-bottom)); transition:opacity 0.3s ease; opacity:0; }
+section.active { display:flex; opacity:1; }
 
 h3 { font-size:18px; margin-bottom:8px; }
 
-label { display:block; margin-top:12px; font-size:16px; }
-input { width:100%; padding:12px; margin-top:6px; font-size:18px; border-radius:8px; border:1px solid #ccc; }
+label { font-size:16px; }
+.input-row { display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+.input-row input { width:45%; padding:10px; font-size:18px; border-radius:8px; border:1px solid #ccc; color:#1976d2; text-align:right; }
+
 button { margin-top:12px; padding:14px; width:100%; font-size:18px; border:none; border-radius:10px; background:#1976d2; color:white; }
 button:active { transform:scale(0.97); }
 .secondary { background:#ccc; color:black; }
@@ -38,24 +43,27 @@ button:active { transform:scale(0.97); }
 
 .box { background:white; padding:16px; margin-bottom:16px; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
 
-.history-item { padding:10px 0; border-bottom:1px solid #eee; font-size:16px; line-height:1.4; }
+.history-item { padding:10px 0; border-bottom:1px solid #eee; font-size:16px; line-height:1.4; opacity:0; transform:translateY(20px); animation:fadeInItem 0.3s forwards; }
+@keyframes fadeInItem { to { opacity:1; transform:translateY(0); } }
+
 .insulin-unit { background:#1976d2; color:white; padding:2px 8px; border-radius:6px; font-weight:600; margin-right:6px; display:inline-block; min-width:50px; text-align:center; }
 .carb-unit { background:#388e3c; color:white; padding:2px 8px; border-radius:6px; font-weight:600; margin-left:6px; display:inline-block; min-width:50px; text-align:center; }
+.bg-unit { background:#9c27b0; color:white; padding:2px 8px; border-radius:6px; font-weight:600; margin-left:6px; display:inline-block; min-width:50px; text-align:center; }
 
-/* Tab bar */
+#doseResult { position:sticky; top:0; background:#fff; z-index:5; padding:12px 0; margin-bottom:10px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+
+#iobBox { background:#1976d2; color:white; font-size:18px; font-weight:bold; padding:16px; border-radius:12px; text-align:center; margin-bottom:16px; }
+
 #tabBar {
   display:flex; height:75px; border-top:1px solid #ccc; background:white; padding-bottom:env(safe-area-inset-bottom);
 }
 .tab {
   flex:1; text-align:center; font-size:16px;
   display:flex; flex-direction:column; justify-content:center; align-items:center;
-  color:#555; cursor:pointer;
+  color:#555; cursor:pointer; transition:color 0.3s;
 }
 .tab.active { color:#1976d2; }
 .tab span.icon { font-size:28px; margin-bottom:2px; }
-
-section { display:none; flex:1; }
-section.active { display:flex; flex-direction:column; }
 
 .disclaimer { font-size:14px; color:#555; line-height:1.4; margin-top:10px; }
 </style>
@@ -68,23 +76,21 @@ section.active { display:flex; flex-direction:column; }
 </div>
 
 <main style="display:none;">
+
 <section id="home" class="active">
-  <div class="box">
-    <h3>Számítás</h3>
+  <div id="doseResult" class="box">
+    <h3>Dózis számítása</h3>
     <label>Szénhidrát (g)</label>
-    <input id="carbs" type="number">
+    <input id="carbs" type="number" placeholder="opcionális">
     <label>Aktuális vércukor (mmol/L)</label>
-    <input id="bg" type="number" step="0.1">
+    <input id="bg" type="number" step="0.1" placeholder="pl. 5.5">
     <button onclick="calculate()">Számolás</button>
     <div id="result" style="margin-top:12px;"></div>
     <button id="injectBtn" style="display:none;" onclick="inject()">Beadás</button>
     <button id="cancelBtn" class="secondary" style="display:none;" onclick="cancel()">Mégse</button>
   </div>
 
-  <div class="box">
-    <h3>Aktív inzulin</h3>
-    <div id="iob"></div>
-  </div>
+  <div id="iobBox">Aktív inzulin: <span id="iob">0.00 E</span></div>
 
   <div class="box">
     <h3>Előzmények (utolsó 10)</h3>
@@ -107,14 +113,22 @@ section.active { display:flex; flex-direction:column; }
 <section id="settings">
   <div class="box">
     <h3>Beállítások</h3>
-    <label>Szénhidrát–inzulin arány (g / 1 E)</label>
-    <input id="cr" type="number" step="0.1">
-    <label>Cél vércukor (mmol/L)</label>
-    <input id="target" type="number" step="0.1" value="5.5">
-    <label>Inzulinérzékenység (mmol/L / 1 E)</label>
-    <input id="isf" type="number" step="0.1">
-    <label>Inzulinhatás időtartama (perc)</label>
-    <input id="duration" type="number" step="1" min="10" value="180">
+    <div class="input-row">
+      <label>Szénhidrát–inzulin</label>
+      <input id="cr" type="number" step="0.1">
+    </div>
+    <div class="input-row">
+      <label>Cél vércukor</label>
+      <input id="target" type="number" step="0.1">
+    </div>
+    <div class="input-row">
+      <label>Inzulinérzékenység</label>
+      <input id="isf" type="number" step="0.1">
+    </div>
+    <div class="input-row">
+      <label>Inzulinhatás (perc)</label>
+      <input id="duration" type="number" step="1" min="10" value="180">
+    </div>
     <button onclick="saveSettings()">Mentés</button>
     <button class="danger" onclick="resetAll()">MINDEN TÖRLÉSE</button>
   </div>
@@ -133,10 +147,9 @@ let lastBolus = null;
 let INSULIN_DURATION = 180*60*1000;
 const HYPO_LIMIT = 4.0;
 
-/* SETTINGS */
 function saveSettings(){
   const crVal=getNum("cr"), targetVal=getNum("target"), isfVal=getNum("isf"), durationVal=getNum("duration");
-  if(durationVal < 10){ alert("Az inzulinhatás időtartama legalább 10 perc!"); return; }
+  if(durationVal<10){ alert("Az inzulinhatás időtartama legalább 10 perc!"); return; }
   localStorage.setItem("settings",JSON.stringify({cr:crVal,target:targetVal,isf:isfVal,duration:durationVal}));
   INSULIN_DURATION = durationVal*60*1000;
   alert("Beállítások mentve");
@@ -149,7 +162,6 @@ function loadSettings(){
   if(s.duration){ duration.value=s.duration; INSULIN_DURATION = s.duration*60*1000; } else { INSULIN_DURATION = 180*60*1000; }
 }
 
-/* STORAGE */
 function getBolusHistory(){ return JSON.parse(localStorage.getItem("boluses")||"[]"); }
 function saveBolus(units, carbs, bg){
   const h=getBolusHistory();
@@ -157,7 +169,6 @@ function saveBolus(units, carbs, bg){
   localStorage.setItem("boluses",JSON.stringify(h));
 }
 
-/* IOB */
 function calcIOB(){
   const now=Date.now(), valid=[];
   let total=0, remainingMs=0;
@@ -174,43 +185,45 @@ function calcIOB(){
   return {total, remainingMs};
 }
 
-/* CALC */
 function calculate(){
   const carbs=getNum("carbs"), bg=getNum("bg"), s=JSON.parse(localStorage.getItem("settings")||"{}");
-  if([carbs,bg,s.cr,s.target,s.isf].some(v=>v===null)){ alert("Hiányzó adat!"); return; }
+  if([bg,s.cr,s.target,s.isf].some(v=>v===null)){ alert("Hiányzó adat!"); return; }
+  const meal = carbs ? carbs/s.cr : 0;
   const {total:iob}=calcIOB();
-  const meal=carbs/s.cr;
-  const corr=bg>=HYPO_LIMIT?Math.max(0,(bg-s.target)/s.isf-iob):0;
+  const corr = bg>=HYPO_LIMIT?Math.max(0,(bg-s.target)/s.isf-iob):0;
   lastBolus = meal+corr;
   result.innerHTML=`
-    Étkezési: <b>${meal.toFixed(2)} E</b><br>
-    Korrekció: <b>${corr.toFixed(2)} E</b><br><br>
+    Étkezési: <b><span class="insulin-unit">${meal.toFixed(2)} E</span></b>
+    <span class="carb-unit">${carbs||0} g CH</span>
+    <span class="bg-unit">${bg} mmol/L</span><br>
+    Korrekció: <b><span class="insulin-unit">${corr.toFixed(2)} E</span></b><br><br>
     <strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>
   `;
   injectBtn.style.display = cancelBtn.style.display = "block";
 }
 
 function inject(){
-  const carbs=getNum("carbs"), bg=getNum("bg");
+  const carbs=getNum("carbs")||0, bg=getNum("bg");
   saveBolus(lastBolus, carbs, bg);
   clearCalc(); updateIOB(); renderHistory(); renderFullHistory();
 }
 function cancel(){ clearCalc(); }
 function clearCalc(){ result.innerHTML=""; injectBtn.style.display = cancelBtn.style.display = "none"; }
 
-/* UI */
 function updateIOB(){
   const {total, remainingMs}=calcIOB();
-  iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br><span class="small">Hátralévő idő: ${Math.ceil(remainingMs/60000)} perc</span>`;
+  iobBox.innerHTML=`Aktív inzulin: <span id="iob">${total.toFixed(2)} E</span><br>
+  <span class="small">Hátralévő idő: ${Math.ceil(remainingMs/60000)} perc</span>`;
 }
 
 function renderHistory(){
   const historyDiv=$("history");
   const h=getBolusHistory().slice(-10).reverse();
   historyDiv.innerHTML=h.length ? h.map(b=>`<div class="history-item">
-    <strong><span class="insulin-unit">${b.units.toFixed(2)} E</span></strong> –
-    <span class="carb-unit">${b.carbs} g CH</span>, BG: ${b.bg} mmol/L<br>
-    <span class="small">${new Date(b.time).toLocaleString()}</span>
+    <span class="insulin-unit">${b.units.toFixed(2)} E</span>
+    <span class="carb-unit">${b.carbs} g CH</span>
+    <span class="bg-unit">${b.bg} mmol/L</span>
+    <br><span class="small">${new Date(b.time).toLocaleString()}</span>
   </div>`).join("") : "<span class='small'>Nincs adat</span>";
 }
 
@@ -219,28 +232,30 @@ function renderFullHistory(){
   const now=Date.now(), monthAgo=now-30*24*60*60*1000;
   const h=getBolusHistory().filter(b=>b.time>=monthAgo).reverse();
   fullHistoryDiv.innerHTML=h.length ? h.map(b=>`<div class="history-item">
-    <strong><span class="insulin-unit">${b.units.toFixed(2)} E</span></strong> –
-    <span class="carb-unit">${b.carbs} g CH</span>, BG: ${b.bg} mmol/L<br>
-    <span class="small">${new Date(b.time).toLocaleString()}</span>
+    <span class="insulin-unit">${b.units.toFixed(2)} E</span>
+    <span class="carb-unit">${b.carbs} g CH</span>
+    <span class="bg-unit">${b.bg} mmol/L</span>
+    <br><span class="small">${new Date(b.time).toLocaleString()}</span>
   </div>`).join("") : "<span class='small'>Nincs adat</span>";
 }
 
-/* TAB NAV */
 document.querySelectorAll(".tab").forEach(tab=>{
   tab.addEventListener("click", ()=>{
     document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
     tab.classList.add("active");
-    document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
-    document.getElementById(tab.dataset.tab).classList.add("active");
-    if(tab.dataset.tab==="home") renderHistory();
-    if(tab.dataset.tab==="log") renderFullHistory();
+    const target = tab.dataset.tab;
+    document.querySelectorAll("section").forEach(s=>{
+      s.classList.remove("active");
+      if(s.id===target) s.classList.add("active");
+    });
+    if(target==="home") renderHistory();
+    if(target==="log") renderFullHistory();
   });
 });
 
 function resetAll(){ if(confirm("Biztos törlöd az összes adatot?")){ localStorage.clear(); location.reload(); } }
 function getNum(id){ const v=parseFloat($(id).value); return isNaN(v)?null:v; }
 
-/* INIT */
 window.onload = () => {
   loadSettings(); updateIOB(); renderHistory(); renderFullHistory();
   setInterval(updateIOB,60000);
