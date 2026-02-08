@@ -7,26 +7,25 @@
 <meta name="theme-color" content="#1e88e5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bolus">
-<link rel="apple-touch-icon" href="icon-192.png">
-<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="manifest" href="./manifest.json">
 
 <style>
-* { box-sizing:border-box; margin:0; padding:0; }
+*{box-sizing:border-box;margin:0;padding:0}
 
-:root {
+/* ===== THEME ===== */
+:root{
   --primary:#1e88e5;
   --primary-soft:#e3f2fd;
   --danger:#d32f2f;
-
   --bg:#f7f9fb;
   --card:#ffffff;
-
   --text-main:#111;
   --text-secondary:#6b7280;
   --border:#e5e7eb;
 }
 
-body.dark {
+body.dark{
   --bg:#0f172a;
   --card:#111827;
   --text-main:#f9fafb;
@@ -35,81 +34,60 @@ body.dark {
   --border:#1f2937;
 }
 
-html, body {
-  height:100%;
-  background: var(--bg);
-  color: var(--text-main);
-  font-family: -apple-system, Arial, sans-serif;
-}
+html,body{height:100%;background:var(--bg);color:var(--text-main);font-family:-apple-system,Arial,sans-serif;}
+body{display:flex;flex-direction:column}
 
-body { display:flex; flex-direction:column; }
+/* SPLASH */
+#splash{position:fixed;inset:0;background:var(--primary);display:flex;flex-direction:column;justify-content:center;align-items:center;color:white;font-weight:600;font-size:22px;z-index:9999}
+#splash img{width:120px;height:120px;margin-bottom:20px}
 
-#splash {
-  position:fixed; inset:0;
-  background:var(--primary);
-  display:flex; flex-direction:column; justify-content:center; align-items:center;
-  color:white; font-weight:600; font-size:22px;
-  z-index:9999;
-}
-#splash img { width:120px; height:120px; margin-bottom:20px; }
+/* MAIN */
+main{flex:1;display:none;padding:16px;padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+section{display:none;flex-direction:column}
+section.active{display:flex}
 
-/* ===== MAIN ===== */
-main { flex:1; display:none; padding:16px; padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
-section { display:none; flex-direction:column; }
-section.active { display:flex; }
+.box{background:var(--card);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 10px 30px rgba(0,0,0,.04)}
+h3{font-size:18px;margin-bottom:10px}
+label{display:block;margin-top:12px;font-size:15px}
+input{width:100%;padding:12px;margin-top:6px;font-size:17px;border-radius:10px;border:1px solid var(--border);background:transparent;color:inherit}
 
-.box {
-  background:var(--card);
-  border-radius:16px;
-  padding:18px;
-  margin-bottom:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.04);
-}
+/* BUTTONS */
+button{width:100%;margin-top:14px;padding:14px;font-size:17px;border:none;border-radius:14px;background:var(--primary);color:white;font-weight:600}
+button:active{transform:scale(.97)}
+.secondary{background:transparent;border:1px solid var(--primary);color:var(--primary)}
+.danger{background:var(--danger)}
 
-h3 { font-size:18px; margin-bottom:10px; }
-label { display:block; margin-top:12px; font-size:15px; }
-input { width:100%; padding:12px; margin-top:6px; font-size:17px; border-radius:10px; border:1px solid var(--border); background:transparent; color:inherit; }
+/* RESULT */
+#result{background:var(--primary-soft);border-radius:14px;padding:14px;margin-top:14px;line-height:1.5}
+#result strong{font-size:18px}
 
-button {
-  width:100%; margin-top:14px; padding:14px; font-size:17px; border:none; border-radius:14px;
-  background:var(--primary); color:white; font-weight:600;
-}
-button:active { transform:scale(.97); }
-.secondary { background:transparent; border:1px solid var(--primary); color:var(--primary); }
-.danger { background:var(--danger); }
+/* HISTORY */
+.history-item{padding:10px 0;border-bottom:1px solid var(--border);line-height:1.4}
+.insulin-unit{background:var(--primary);color:white;padding:2px 8px;border-radius:6px;font-weight:600;margin-right:6px}
+.carb-unit{background:#388e3c;color:white;padding:2px 8px;border-radius:6px;font-weight:600}
 
-/* ===== RESULT ===== */
-#result { background:var(--primary-soft); border-radius:14px; padding:14px; margin-top:14px; line-height:1.5; }
-#result strong { font-size:18px; }
+/* TAB BAR */
+#tabBar{display:none;height:75px;border-top:1px solid var(--border);background:var(--card);padding-bottom:env(safe-area-inset-bottom);display:flex}
+.tab{flex:1;text-align:center;font-size:14px;display:flex;flex-direction:column;justify-content:center;align-items:center;color:var(--text-secondary);cursor:pointer}
+.tab.active{color:var(--primary)}
+.tab .icon{font-size:26px}
 
-/* ===== HISTORY ===== */
-.history-item { padding:10px 0; border-bottom:1px solid var(--border); line-height:1.4; }
-.insulin-unit { background:var(--primary); color:white; padding:2px 8px; border-radius:6px; font-weight:600; margin-right:6px; }
-.carb-unit { background:#388e3c; color:white; padding:2px 8px; border-radius:6px; font-weight:600; }
-
-/* ===== TAB BAR ===== */
-#tabBar { display:none; height:75px; border-top:1px solid var(--border); background:var(--card); padding-bottom:env(safe-area-inset-bottom); display:flex; }
-.tab { flex:1; text-align:center; font-size:14px; display:flex; flex-direction:column; justify-content:center; align-items:center; color:var(--text-secondary); cursor:pointer; }
-.tab.active { color:var(--primary); }
-.tab .icon { font-size:26px; }
-
-/* ===== DARK SWITCH ===== */
-.toggle { display:flex; justify-content:space-between; align-items:center; margin-top:16px; }
-.switch { position:relative; width:48px; height:28px; }
-.switch input { display:none; }
-.slider { position:absolute; inset:0; background:#ccc; border-radius:999px; transition:.2s; }
-.slider:before { content:""; position:absolute; width:22px; height:22px; left:3px; top:3px; background:white; border-radius:50%; transition:.2s; }
-.switch input:checked + .slider { background:var(--primary); }
-.switch input:checked + .slider:before { transform:translateX(20px); }
-
-.small { font-size:13px; color:var(--text-secondary); }
+/* DARK SWITCH */
+.toggle{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+.switch{position:relative;width:48px;height:28px}
+.switch input{display:none}
+.slider{position:absolute;inset:0;background:#ccc;border-radius:999px;transition:.2s}
+.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}
+.switch input:checked + .slider{background:var(--primary)}
+.switch input:checked + .slider:before{transform:translateX(20px)}
+.small{font-size:13px;color:var(--text-secondary)}
 </style>
 </head>
 
 <body>
 
 <div id="splash">
-  <img src="icon-512.png">
+  <img src="./icon-512.png">
   Betöltés…
 </div>
 
@@ -173,8 +151,8 @@ button:active { transform:scale(.97); }
 
 <div id="tabBar">
   <div class="tab active" data-tab="home"><span class="icon">🏠</span>Kezdőlap</div>
-  <div class="tab" data-tab="log"><span class="icon">📖</span>Napló</div>
-  <div class="tab" data-tab="settings"><span class="icon">⚙️</span>Beállítások</div>
+  <div class="tab" data-tab="log"><span class="icon">📖</span> Napló</div>
+  <div class="tab" data-tab="settings"><span class="icon">⚙️</span> Beállítások</div>
 </div>
 
 <script>
@@ -200,84 +178,33 @@ function loadSettings(){
 
 /* HISTORY + IOB */
 function getBolusHistory(){ return JSON.parse(localStorage.getItem("boluses")||"[]"); }
-function saveBolus(units,carbs,bg){
-  const h=getBolusHistory();
-  h.push({units,carbs,bg,time:Date.now()});
-  localStorage.setItem("boluses",JSON.stringify(h));
-}
-function calcIOB(){
-  const now=Date.now(); let total=0,remain=0; const valid=[];
-  getBolusHistory().forEach(b=>{
-    const e=now-b.time;
-    if(e<INSULIN_DURATION){
-      const r=1-e/INSULIN_DURATION;
-      total+=b.units*r;
-      remain=Math.max(remain,INSULIN_DURATION-e);
-      valid.push(b);
-    }
-  });
-  localStorage.setItem("boluses",JSON.stringify(valid));
-  return {total,remain};
-}
+function saveBolus(units,carbs,bg){ const h=getBolusHistory(); h.push({units,carbs,bg,time:Date.now()}); localStorage.setItem("boluses",JSON.stringify(h)); }
+function calcIOB(){ const now=Date.now(); let total=0,remain=0; const valid=[]; getBolusHistory().forEach(b=>{ const e=now-b.time; if(e<INSULIN_DURATION){ const r=1-e/INSULIN_DURATION; total+=b.units*r; remain=Math.max(remain,INSULIN_DURATION-e); valid.push(b); } }); localStorage.setItem("boluses",JSON.stringify(valid)); return {total,remain}; }
 
 /* CALC */
-function calculate(){
-  const carbs=getNum("carbs"),bg=getNum("bg");
-  const s=JSON.parse(localStorage.getItem("settings")||"{}");
-  if([carbs,bg,s.cr,s.target,s.isf].some(v=>v==null)){ alert("Hiányzó adat!"); return; }
-  const {total:iob}=calcIOB();
-  const meal=carbs/s.cr;
-  const corr=bg>=HYPO_LIMIT?Math.max(0,(bg-s.target)/s.isf-iob):0;
-  lastBolus=meal+corr;
-  result.innerHTML=`Étkezési: <strong>${meal.toFixed(2)} E</strong><br>
-  Korrekció: <strong>${corr.toFixed(2)} E</strong><br><br>
-  <strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
-  injectBtn.style.display=cancelBtn.style.display="block";
-}
+function calculate(){ const carbs=getNum("carbs"),bg=getNum("bg"); const s=JSON.parse(localStorage.getItem("settings")||"{}"); if([carbs,bg,s.cr,s.target,s.isf].some(v=>v==null)){ alert("Hiányzó adat!"); return; } const {total:iob}=calcIOB(); const meal=carbs/s.cr; const corr=bg>=HYPO_LIMIT?Math.max(0,(bg-s.target)/s.isf-iob):0; lastBolus=meal+corr; result.innerHTML=`Étkezési: <strong>${meal.toFixed(2)} E</strong><br>Korrekció: <strong>${corr.toFixed(2)} E</strong><br><br><strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`; injectBtn.style.display=cancelBtn.style.display="block"; }
 function inject(){ saveBolus(lastBolus,getNum("carbs"),getNum("bg")); clearCalc(); updateIOB(); renderHistory(); renderFullHistory(); }
 function cancel(){ clearCalc(); }
 function clearCalc(){ result.innerHTML=""; injectBtn.style.display=cancelBtn.style.display="none"; }
 
+/* UI */
 function updateIOB(){ const {total,remain}=calcIOB(); iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br><span class="small">${Math.ceil(remain/60000)} perc</span>`; }
-function renderHistory(){ history.innerHTML=getBolusHistory().slice(-10).reverse().map(b=>`<div class="history-item">
-<span class="insulin-unit">${b.units.toFixed(2)} E</span>
-<span class="carb-unit">${b.carbs} g CH</span>
-BG: ${b.bg} mmol/L<br>
-<span class="small">${new Date(b.time).toLocaleString()}</span></div>`).join("")||"<span class='small'>Nincs adat</span>"; }
-function renderFullHistory(){ const month=Date.now()-30*24*60*60*1000;
-fullHistory.innerHTML=getBolusHistory().filter(b=>b.time>=month).reverse().map(b=>`<div class="history-item">
-<span class="insulin-unit">${b.units.toFixed(2)} E</span>
-<span class="carb-unit">${b.carbs} g CH</span>
-BG: ${b.bg} mmol/L<br>
-<span class="small">${new Date(b.time).toLocaleString()}</span></div>`).join("")||"<span class='small'>Nincs adat</span>"; }
+function renderHistory(){ history.innerHTML=getBolusHistory().slice(-10).reverse().map(b=>`<div class="history-item"><span class="insulin-unit">${b.units.toFixed(2)} E</span><span class="carb-unit">${b.carbs} g CH</span>BG: ${b.bg} mmol/L<br><span class="small">${new Date(b.time).toLocaleString()}</span></div>`).join("")||"<span class='small'>Nincs adat</span>"; }
+function renderFullHistory(){ const month=Date.now()-30*24*60*60*1000; fullHistory.innerHTML=getBolusHistory().filter(b=>b.time>=month).reverse().map(b=>`<div class="history-item"><span class="insulin-unit">${b.units.toFixed(2)} E</span><span class="carb-unit">${b.carbs} g CH</span>BG: ${b.bg} mmol/L<br><span class="small">${new Date(b.time).toLocaleString()}</span></div>`).join("")||"<span class='small'>Nincs adat</span>"; }
 
 /* TABS */
-document.querySelectorAll(".tab").forEach(t=>{
-  t.onclick=()=>{
-    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-    document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
-    t.classList.add("active");
-    document.getElementById(t.dataset.tab).classList.add("active");
-    if(t.dataset.tab==="home") renderHistory();
-    if(t.dataset.tab==="log") renderFullHistory();
-  }
-});
+document.querySelectorAll(".tab").forEach(t=>{ t.onclick=()=>{ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); document.querySelectorAll("section").forEach(s=>s.classList.remove("active")); t.classList.add("active"); document.getElementById(t.dataset.tab).classList.add("active"); if(t.dataset.tab==="home") renderHistory(); if(t.dataset.tab==="log") renderFullHistory(); } });
 
 function resetAll(){ if(confirm("Biztos?")){ localStorage.clear(); location.reload(); } }
 function getNum(id){ const v=parseFloat($(id).value); return isNaN(v)?null:v; }
 
 /* DARK MODE */
-function applyTheme(){
-  document.body.classList.toggle("dark",localStorage.theme==="dark");
-  const t=document.getElementById("darkToggle");
-  if(t) t.checked = localStorage.theme==="dark";
-}
+function applyTheme(){ document.body.classList.toggle("dark",localStorage.theme==="dark"); const t=document.getElementById("darkToggle"); if(t) t.checked=localStorage.theme==="dark"; }
 
 /* INIT */
 window.onload=()=>{
   loadSettings();
   applyTheme();
-
   const darkToggle=document.getElementById("darkToggle");
   if(darkToggle) darkToggle.onchange=()=>{ localStorage.theme=darkToggle.checked?"dark":"light"; applyTheme(); };
 
