@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1976d2">
+<meta charset="UTF-8">
+<title>Bolus varázsló – toll (stabil)</title>
+<style>
+body {
+font-family: Arial, sans-serif;
+max-width: 720px;
+margin: 30px auto;
+background: #f4f4f4;
+padding: 20px;
+}
+h1 { text-align: center; }
+label { display: block; margin-top: 10px; }
+input {
+width: 100%;
+padding: 8px;
+margin-top: 4px;
+}
+button {
+margin-top: 12px;
+padding: 12px;
+width: 100%;
+font-size: 16px;
+}
+.box {
+background: white;
+padding: 15px;
+margin-top: 20px;
+border-radius: 6px;
+}
+.secondary { background: #ddd; }
+.danger { background: #d32f2f; color: white; }
+.small { font-size: 13px; color: #555; }
+</style>
+</head>
+
+<body>
+
+<h1>Bolus varázsló (toll)</h1>
+
+<div class="box">
+<h3>Beállítások</h3>
+
+<label>Szénhidrát–inzulin arány (g / 1 E)</label>
+<input id="cr" type="number" step="0.1">
+
+<label>Cél vércukor (mmol/L)</label>
+<input id="target" type="number" step="0.1" value="5.5">
+
+<label>Inzulinérzékenység (mmol/L / 1 E)</label>
+<input id="isf" type="number" step="0.1">
+
+<button onclick="saveSettings()">Beállítások mentése</button>
+<button class="danger" onclick="resetAll()">RESET – minden törlése</button>
+</div>
+
+<div class="box">
+<h3>Aktuális adatok</h3>
+
+<label>Szénhidrát (g)</label>
+<input id="carbs" type="number">
+
+<label>Aktuális vércukor (mmol/L)</label>
+<input id="bg" type="number" step="0.1">
+
+<button onclick="calculate()">Számolás</button>
+
+<div id="result" style="margin-top:15px;"></div>
+
+<button id="injectBtn" style="display:none;" onclick="inject()">Beadás</button>
+<button id="cancelBtn" class="secondary" style="display:none;" onclick="cancel()">Mégse</button>
+</div>
+
+<div class="box">
+<h3>Aktív inzulin</h3>
+<div id="iob"></div>
+</div>
+
+<script>
+const INSULIN_DURATION = 3 * 60 * 60 * 1000;
+const HYPO_LIMIT = 4.0;
+
+let lastBolus = null;
+
+/* -------- SETTINGS -------- */
+
+function saveSettings() {
+localStorage.setItem("settings", JSON.stringify({
+cr: getNum("cr"),
+target: getNum("target"),
+isf: getNum("isf")
+}));
+alert("Beállítások elmentve");
+}
+
+function loadSettings() {
+const s = JSON.parse(localStorage.getItem("settings") || "{}");
+if (s.cr) document.getElementById("cr").value = s.cr;
+if (s.target) document.getElementById("target").value = s.target;
+if (s.isf) document.getElementById("isf").value = s.isf;
+}
+
+/* -------- HELPERS -------- */
+
+function getNum(id) {
+const v = parseFloat(document.getElementById(id).value);
+return isNaN(v) ? null : v;
+}
+
+/* -------- BOLUS STORAGE -------- */
+
+function getBolusHistory() {
+return JSON.parse(localStorage.getItem("boluses") || "[]");
+}
+
+function saveBolus(units) {
+const h = getBolusHistory();
+h.push({ units, time: Date.now() });
+localStorage.setItem("boluses", JSON.stringify(h));
+}
+
+/* -------- IOB -------- */
+
+function calcIOB() {
+const now = Date.now();
+let total = 0;
+let remainingMs = 0;
+const valid = [];
+
+getBolusHistory().forEach(b => {
+if (typeof b.units !== "number") return;
+const elapsed = now - b.time;
+if (elapsed < INSULIN_DURATION) {
+const r = 1 - elapsed / INSULIN_DURATION;
+total += b.units * r;
+remainingMs = Math.max(remainingMs, INSULIN_DURATION - elapsed);
+valid.push(b);
+}
+});
+
+localStorage.setItem("boluses", JSON.stringify(valid));
+return { total, remainingMs };
+}
+
+/* -------- CALC -------- */
+
+function calculate() {
+const carbs = getNum("carbs");
+const bg = getNum("bg");
+const s = JSON.parse(localStorage.getItem("settings") || "{}");
+
+if ([carbs, bg, s.cr, s.target, s.isf].some(v => v === null)) {
+alert("Hiányzó adat!");
+return;
+}
+
+const { total: iob } = calcIOB();
+const meal = carbs / s.cr;
+let corr = 0;
+
+if (bg >= HYPO_LIMIT) {
+corr = Math.max(0, (bg - s.target) / s.isf - iob);
+}
+
+lastBolus = meal + corr;
+
+document.getElementById("result").innerHTML = `
+Étkezési bolus: <b>${meal.toFixed(2)} E</b><br>
+Korrekciós bolus: <b>${corr.toFixed(2)} E</b><br><br>
+<strong>Javasolt bolus: ${lastBolus.toFixed(2)} E</strong>
+`;
+
+injectBtn.style.display = "block";
+cancelBtn.style.display = "block";
+}
+
+/* -------- ACTIONS -------- */
+
+function inject() {
+if (lastBolus === null) return;
+saveBolus(lastBolus);
+clearCalc();
+updateIOB();
+}
+
+function cancel() {
+clearCalc();
+}
+
+function clearCalc() {
+document.getElementById("result").innerHTML = "";
+injectBtn.style.display = "none";
+cancelBtn.style.display = "none";
+lastBolus = null;
+}
+
+/* -------- RESET -------- */
+
+function resetAll() {
+if (!confirm("Biztos törlöd az ÖSSZES adatot?")) return;
+localStorage.clear();
+location.reload();
+}
+
+/* -------- UI -------- */
+
+function updateIOB() {
+const { total, remainingMs } = calcIOB();
+const min = Math.ceil(remainingMs / 60000);
+document.getElementById("iob").innerHTML =
+`<strong>${total.toFixed(2)} E</strong><br>
+<span class="small">Hátralévő idő: ${min > 0 ? min + " perc" : "–"}</span>`;
+}
+
+loadSettings();
+updateIOB();
+setInterval(updateIOB, 60000);
+</script>
+<script>
+if ("serviceWorker" in navigator {
+navigator.serviceWorker.register("sw.js");
+}
+</script>
+</body>
+</html>
