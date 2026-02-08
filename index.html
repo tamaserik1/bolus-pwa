@@ -46,8 +46,6 @@ button:active { transform:scale(0.97); }
 #tabBar { display:flex; height:70px; border-top:1px solid #ccc; background:white; padding-bottom:env(safe-area-inset-bottom); transition: background 0.3s; }
 .tab { flex:1; text-align:center; font-size:14px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center; padding-top:6px; color:#555; cursor:pointer; }
 .tab.active { color:#1976d2; }
-.tab svg { width:24px; height:24px; margin-bottom:4px; stroke:#555; fill:none; stroke-width:2; }
-.tab.active svg { stroke:#1976d2; }
 
 section { display:none; flex:1; }
 section.active { display:flex; flex-direction:column; }
@@ -149,7 +147,7 @@ let lastBolus = null;
 let INSULIN_DURATION = 180*60*1000;
 const HYPO_LIMIT = 4.0;
 
-function getNum(id){ const v=parseFloat($(id).value); return isNaN(v)?null:v; }
+function getNum(id){ const v=parseFloat($(id).value); return isNaN(v)?null:v }
 
 /* SETTINGS */
 function saveSettings(){
@@ -168,9 +166,12 @@ function loadSettings(){
   if(s.dark) { darkToggle.classList.add("active"); document.body.classList.add("dark"); }
 }
 
-/* DARK MODE TOGGLE */
+/* DARK MODE */
 const darkToggle = $("darkToggle");
-darkToggle.addEventListener("click", ()=>{ darkToggle.classList.toggle("active"); document.body.classList.toggle("dark"); });
+darkToggle.addEventListener("click", ()=>{
+  darkToggle.classList.toggle("active");
+  document.body.classList.toggle("dark");
+});
 
 /* BOLUS STORAGE */
 function getBolusHistory(){ return JSON.parse(localStorage.getItem("boluses")||"[]"); }
@@ -224,7 +225,11 @@ function resetAll(){ if(confirm("Biztos törlöd az összes adatot?")){ localSto
 window.onload=()=>{
   loadSettings(); updateIOB(); renderHistory(); renderFullHistory();
   setInterval(updateIOB,60000);
+  const splash=document.getElementById("splash");
+  const main=document.querySelector("main");
+  const tabBar=document.getElementById("tabBar");
   splash.addEventListener("animationend",()=>{ splash.style.display="none"; main.style.display="flex"; tabBar.style.display="flex"; });
+  setTimeout(()=>{ splash.style.display="none"; main.style.display="flex"; tabBar.style.display="flex"; }, 1500);
 };
 </script>
 
