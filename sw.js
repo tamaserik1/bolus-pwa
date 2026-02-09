@@ -1,23 +1,26 @@
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `bolus-cache-${CACHE_VERSION}`;
+const BASE = '/bolus-pwa';
 
-const CORE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+const CORE = [
+  `${BASE}/`,
+  `${BASE}/index.html`,
+  `${BASE}/manifest.json`,
+  `${BASE}/icon-192.png`,
+  `${BASE}/icon-512.png`,
+  `${BASE}/js/app.js`,
+  `${BASE}/js/ui.js`,
+  `${BASE}/js/calc.js`,
+  `${BASE}/js/storage.js`
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener('install', e => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(CORE_ASSETS))
-  );
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(CORE)));
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
+self.addEventListener('activate', e => {
+  e.waitUntil(
     Promise.all([
       self.clients.claim(),
       caches.keys().then(keys =>
@@ -27,25 +30,17 @@ self.addEventListener('activate', event => {
   );
 });
 
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
 
-  // iOS PWA navigation fix
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      caches.match('/index.html').then(res => res || fetch('/index.html'))
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      caches.match(`${BASE}/index.html`).then(r => r || fetch(`${BASE}/index.html`))
     );
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(res => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        return res;
-      });
-    })
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request))
   );
 });
