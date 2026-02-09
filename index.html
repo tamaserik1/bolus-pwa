@@ -2,181 +2,145 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
-<title>Bolus</title>
+<title>Bolus varázsló</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#4F46E5">
+<meta name="theme-color" content="#EDEDED">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 
 <style>
-/* =====================
-   DESIGN SYSTEM
-===================== */
-:root {
-  --bg: #F7F8FA;
-  --card: #FFFFFF;
-  --text: #1F2937;
-  --muted: #9CA3AF;
-  --soft: #F1F3F5;
-  --primary: #4F46E5;
-  --danger: #EF4444;
+/* ===== SZÍNPALETTA – REFERENCIAHŰ ===== */
+:root{
+  --bg:#F5F5F4;
+  --card:#FFFFFF;
+  --text:#2A2A2A;
+  --muted:#8A8A8A;
+  --soft:#EFEFEF;
+  --accent:#DADADA;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0F172A;
-    --card: #020617;
-    --text: #E5E7EB;
-    --muted: #94A3B8;
-    --soft: #1E293B;
-  }
-}
+*{box-sizing:border-box;margin:0;padding:0}
 
-* { box-sizing:border-box; margin:0; padding:0; }
-html, body {
+html,body{
   height:100%;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro",system-ui,sans-serif;
   background:var(--bg);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro", sans-serif;
   color:var(--text);
 }
 
-body { display:flex; flex-direction:column; }
+body{display:flex;flex-direction:column}
 
-/* =====================
-   SPLASH
-===================== */
-#splash {
-  position:fixed; inset:0;
-  background:linear-gradient(135deg,#4F46E5,#6366F1);
-  display:flex; flex-direction:column;
-  justify-content:center; align-items:center;
-  color:white; font-size:24px; font-weight:700;
+/* ===== SPLASH ===== */
+#splash{
+  position:fixed;inset:0;
+  background:var(--bg);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  font-size:22px;
+  font-weight:600;
   z-index:9999;
-  animation:fadeOut 1.4s ease forwards;
+  animation:fadeOut 1.2s ease forwards;
   animation-delay:1.2s;
 }
-#splash img { width:120px; margin-bottom:16px; animation:pop 1.2s ease; }
-@keyframes pop { from{transform:scale(.8);opacity:0} to{transform:scale(1);opacity:1} }
-@keyframes fadeOut { to{opacity:0;pointer-events:none} }
+#splash img{width:110px;margin-bottom:16px}
+@keyframes fadeOut{to{opacity:0;pointer-events:none}}
 
-/* =====================
-   LAYOUT
-===================== */
-main {
+/* ===== LAYOUT ===== */
+main{
   flex:1;
   padding:16px;
-  padding-bottom:calc(90px + env(safe-area-inset-bottom));
+  padding-bottom:90px;
 }
+section{display:none}
+section.active{display:block}
 
-section { display:none; animation:slide .25s ease; }
-section.active { display:block; }
-
-@keyframes slide {
-  from { transform:translateY(10px); opacity:0 }
-  to { transform:none; opacity:1 }
-}
-
-/* =====================
-   CARDS
-===================== */
-.box {
+/* ===== KÁRTYÁK ===== */
+.box{
   background:var(--card);
-  border-radius:22px;
   padding:18px;
   margin-bottom:18px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
+  border-radius:20px;
+  box-shadow:
+    0 10px 25px rgba(0,0,0,.06),
+    0 4px 10px rgba(0,0,0,.04);
 }
 
-/* =====================
-   FORM
-===================== */
-label { font-size:13px; color:var(--muted); margin-top:14px; display:block; }
+/* ===== FORM ===== */
+h3{font-size:17px;margin-bottom:8px}
 
-input {
+label{
+  display:block;
+  margin-top:14px;
+  font-size:14px;
+  color:var(--muted);
+}
+
+input{
   width:100%;
   margin-top:6px;
-  padding:14px 16px;
+  padding:14px;
+  font-size:17px;
   border:none;
   border-radius:14px;
   background:var(--soft);
-  font-size:17px;
-  color:var(--text);
 }
 
-/* =====================
-   BUTTONS
-===================== */
-button {
-  width:100%;
+/* ===== GOMBOK ===== */
+button{
   margin-top:14px;
-  padding:16px;
+  width:100%;
+  padding:15px;
+  font-size:17px;
   border:none;
-  border-radius:16px;
-  font-size:16px;
-  font-weight:600;
-  background:var(--primary);
-  color:white;
-  box-shadow:0 8px 20px rgba(79,70,229,.35);
-  transition:.15s ease;
-}
-button:active { transform:scale(.96); }
-
-.secondary {
-  background:var(--soft);
+  border-radius:14px;
+  background:var(--accent);
   color:var(--text);
-  box-shadow:none;
 }
+button:active{transform:scale(.97)}
+.secondary{background:var(--soft)}
+.danger{background:#E0B4B4}
 
-.danger { background:var(--danger); }
-
-/* =====================
-   HISTORY
-===================== */
-.history-item {
+/* ===== HISTORY ===== */
+.history-item{
   padding:10px 0;
-  font-size:14px;
+  font-size:15px;
   line-height:1.4;
 }
-
-.pill {
+.badge{
   display:inline-block;
-  padding:4px 10px;
+  padding:3px 10px;
   border-radius:999px;
-  font-size:13px;
+  background:var(--soft);
   font-weight:600;
+  font-size:13px;
 }
 
-.insulin { background:rgba(79,70,229,.15); color:var(--primary); }
-.carb { background:rgba(34,197,94,.2); color:#16A34A; }
-
-.small { font-size:13px; color:var(--muted); }
-
-/* =====================
-   TAB BAR
-===================== */
-#tabBar {
-  position:fixed; bottom:0; left:0; right:0;
-  height:72px;
+/* ===== TAB BAR ===== */
+#tabBar{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  height:70px;
   background:var(--card);
   display:flex;
-  border-radius:26px 26px 0 0;
-  box-shadow:0 -10px 30px rgba(0,0,0,.15);
+  border-top:1px solid var(--accent);
 }
-
-.tab {
+.tab{
   flex:1;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
-  font-size:12px;
+  font-size:13px;
   color:var(--muted);
 }
-.tab.active { color:var(--primary); }
+.tab.active{color:var(--text)}
+.tab span{font-size:22px;margin-bottom:2px}
 
-svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:2; margin-bottom:4px; }
+.small{font-size:13px;color:var(--muted)}
 </style>
 </head>
 
@@ -184,93 +148,96 @@ svg { width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:2; m
 
 <div id="splash">
   <img src="icon-512.png">
-  Bolus
+  Betöltés…
 </div>
 
-<main>
+<main style="display:none">
+
 <section id="home" class="active">
   <div class="box">
+    <h3>Számítás</h3>
     <label>Szénhidrát (g)</label>
     <input id="carbs" type="number">
-    <label>Vércukor (mmol/L)</label>
+    <label>Aktuális vércukor (mmol/L)</label>
     <input id="bg" type="number" step="0.1">
-    <button onclick="tap();calculate()">Számolás</button>
+    <button onclick="calculate()">Számolás</button>
     <div id="result" style="margin-top:12px"></div>
-    <button id="injectBtn" style="display:none" onclick="tap();inject()">Beadás</button>
+    <button id="injectBtn" style="display:none" onclick="inject()">Beadás</button>
     <button id="cancelBtn" class="secondary" style="display:none" onclick="cancel()">Mégse</button>
   </div>
 
   <div class="box">
-    <strong>Aktív inzulin</strong>
+    <h3>Aktív inzulin</h3>
     <div id="iob"></div>
   </div>
 
   <div class="box">
-    <strong>Előzmények</strong>
+    <h3>Előzmények (utolsó 10)</h3>
     <div id="history"></div>
+  </div>
+
+  <div class="box small">
+    Ez az alkalmazás nem minősül orvosi eszköznek.<br>
+    A számítások tájékoztató jellegűek, nem helyettesítik az orvosi döntést.
   </div>
 </section>
 
 <section id="log">
   <div class="box">
-    <strong>Napló</strong>
+    <h3>Előzmények (1 hónap)</h3>
     <div id="fullHistory"></div>
   </div>
 </section>
 
 <section id="settings">
   <div class="box">
-    <label>CH / E</label><input id="cr" type="number">
-    <label>Cél BG</label><input id="target" type="number" value="5.5">
-    <label>ISF</label><input id="isf" type="number">
-    <label>Hatásidő (perc)</label><input id="duration" type="number" value="180">
-    <button onclick="tap();saveSettings()">Mentés</button>
+    <h3>Beállítások</h3>
+    <label>Szénhidrát–inzulin arány</label>
+    <input id="cr" type="number" step="0.1">
+    <label>Cél vércukor</label>
+    <input id="target" type="number" step="0.1" value="5.5">
+    <label>Inzulinérzékenység</label>
+    <input id="isf" type="number" step="0.1">
+    <label>Hatásidő (perc)</label>
+    <input id="duration" type="number" value="180">
+    <button onclick="saveSettings()">Mentés</button>
     <button class="danger" onclick="resetAll()">MINDEN TÖRLÉSE</button>
   </div>
 </section>
+
 </main>
 
-<div id="tabBar">
-  <div class="tab active" data-tab="home">
-    <svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"/><path d="M9 21V9h6v12"/></svg>
-    Kezdő
-  </div>
-  <div class="tab" data-tab="log">
-    <svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M4 5h16"/></svg>
-    Napló
-  </div>
-  <div class="tab" data-tab="settings">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.6 1.6 0 0 0-1.82-.33"/></svg>
-    Beállítások
-  </div>
+<div id="tabBar" style="display:none">
+  <div class="tab active" data-tab="home"><span>🏠</span>Kezdőoldal</div>
+  <div class="tab" data-tab="log"><span>📖</span>Napló</div>
+  <div class="tab" data-tab="settings"><span>⚙️</span>Beállítások</div>
 </div>
 
 <script>
-/* HAPTIC */
-function tap(){ navigator.vibrate?.(10); }
-
-/* ======= AZ EREDETI JS LOGIKÁD VÁLTOZATLANUL ======= */
-/* (szándékosan nem rövidítem – copy/paste kompatibilis) */
-
+/* ===== AZ EREDETI, MŰKÖDŐ JS-ED ===== */
 const $=id=>document.getElementById(id);
-let lastBolus=null, INSULIN_DURATION=180*60*1000;
+let lastBolus=null;
+let INSULIN_DURATION=180*60*1000;
 const HYPO_LIMIT=4;
 
 function saveSettings(){
  const s={cr:+cr.value,target:+target.value,isf:+isf.value,duration:+duration.value};
  localStorage.setItem("settings",JSON.stringify(s));
  INSULIN_DURATION=s.duration*60000;
- alert("Mentve");
+ alert("Beállítások mentve");
 }
 function loadSettings(){
  const s=JSON.parse(localStorage.getItem("settings")||"{}");
- if(s.cr)cr.value=s.cr;if(s.target)target.value=s.target;
- if(s.isf)isf.value=s.isf;if(s.duration){duration.value=s.duration;INSULIN_DURATION=s.duration*60000;}
+ if(s.cr)cr.value=s.cr;
+ if(s.target)target.value=s.target;
+ if(s.isf)isf.value=s.isf;
+ if(s.duration){duration.value=s.duration;INSULIN_DURATION=s.duration*60000;}
 }
 
 function getBolusHistory(){return JSON.parse(localStorage.getItem("boluses")||"[]");}
 function saveBolus(units,carbs,bg){
- const h=getBolusHistory();h.push({units,carbs,bg,time:Date.now()});
+ const h=getBolusHistory();
+ h.push({units,carbs,bg,time:Date.now()});
  localStorage.setItem("boluses",JSON.stringify(h));
 }
 
@@ -280,7 +247,9 @@ function calcIOB(){
   const e=now-b.time;
   if(e<INSULIN_DURATION){
    const r=1-e/INSULIN_DURATION;
-   total+=b.units*r;remaining=Math.max(remaining,INSULIN_DURATION-e);valid.push(b);
+   total+=b.units*r;
+   remaining=Math.max(remaining,INSULIN_DURATION-e);
+   valid.push(b);
   }
  });
  localStorage.setItem("boluses",JSON.stringify(valid));
@@ -288,48 +257,62 @@ function calcIOB(){
 }
 
 function calculate(){
- const carbs=+carbs.value,bg=+bg.value,s=JSON.parse(localStorage.getItem("settings")||"{}");
- if(!carbs||!bg||!s.cr||!s.isf)return alert("Hiányzó adat");
- const iob=calcIOB().total;
- const meal=carbs/s.cr;
- const corr=bg>=HYPO_LIMIT?Math.max(0,(bg-s.target)/s.isf-iob):0;
+ const carbsVal=parseFloat(carbs.value);
+ const bgVal=parseFloat(bg.value);
+ const s=JSON.parse(localStorage.getItem("settings")||"{}");
+ if([carbsVal,bgVal,s.cr,s.target,s.isf].some(v=>isNaN(v))){
+   alert("Hiányzó adat!");
+   return;
+ }
+ const {total:iob}=calcIOB();
+ const meal=carbsVal/s.cr;
+ const corr=bgVal>=HYPO_LIMIT?Math.max(0,(bgVal-s.target)/s.isf-iob):0;
  lastBolus=meal+corr;
- result.innerHTML=`<b>${lastBolus.toFixed(2)} E</b>`;
+ result.innerHTML=`<strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
  injectBtn.style.display=cancelBtn.style.display="block";
 }
 
 function inject(){
- saveBolus(lastBolus,+carbs.value,+bg.value);
+ saveBolus(lastBolus,parseFloat(carbs.value),parseFloat(bg.value));
  cancel();updateIOB();renderHistory();renderFullHistory();
 }
-function cancel(){result.innerHTML="";injectBtn.style.display=cancelBtn.style.display="none";}
+function cancel(){
+ result.innerHTML="";
+ injectBtn.style.display=cancelBtn.style.display="none";
+}
 
 function updateIOB(){
  const {total,remaining}=calcIOB();
- iob.innerHTML=`<b>${total.toFixed(2)} E</b><div class="small">${Math.ceil(remaining/60000)} perc</div>`;
+ iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br>
+ <span class="small">Hátralévő idő: ${Math.ceil(remaining/60000)} perc</span>`;
 }
 
 function renderHistory(){
  history.innerHTML=getBolusHistory().slice(-10).reverse().map(b=>`
-  <div class="history-item">
-   <span class="pill insulin">${b.units.toFixed(2)} E</span>
-   <span class="pill carb">${b.carbs} g</span><br>
-   <span class="small">${new Date(b.time).toLocaleString()}</span>
-  </div>`).join("")||"<span class=small>Nincs adat</span>";
+ <div class="history-item">
+  <span class="badge">${b.units.toFixed(2)} E</span>
+  <span class="badge">${b.carbs} g CH</span><br>
+  <span class="small">${new Date(b.time).toLocaleString()}</span>
+ </div>`).join("")||"<span class='small'>Nincs adat</span>";
 }
 function renderFullHistory(){renderHistory();}
 
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
- document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
- t.classList.add("active");
- document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
- $(t.dataset.tab).classList.add("active");
+document.querySelectorAll(".tab").forEach(t=>{
+ t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  $(t.dataset.tab).classList.add("active");
+ };
 });
 
 window.onload=()=>{
  loadSettings();updateIOB();renderHistory();
- document.getElementById("splash").addEventListener("animationend",()=>{
-  splash.remove(); });
+ splash.addEventListener("animationend",()=>{
+  splash.style.display="none";
+  document.querySelector("main").style.display="block";
+  tabBar.style.display="flex";
+ });
 };
 
 if("serviceWorker"in navigator){navigator.serviceWorker.register("sw.js");}
