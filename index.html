@@ -12,37 +12,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
 <style>
-html,body{margin:0;font-family:-apple-system,Arial,sans-serif}
-body.dark{background:#121212;color:#eee}
-.box{background:#fff;padding:16px;margin:16px;border-radius:12px}
-body.dark .box{background:#1e1e1e}
-button{padding:12px;width:100%;margin-top:8px;border-radius:10px;border:none;background:#1976d2;color:#fff;cursor:pointer;}
-button.secondary{background:#ccc;color:#000}
-button.danger{background:#d32f2f}
-#tabBar{position:fixed;bottom:0;left:0;right:0;height:60px;display:flex;border-top:1px solid #ccc;background:#fff}
-.tab{flex:1;text-align:center;line-height:60px;cursor:pointer;}
-.tab.active{color:#1976d2;font-weight:bold}
-input{width:calc(50% - 12px);padding:8px;margin:8px 6px 0 0;border:1px solid #ccc;border-radius:6px;font-size:16px;}
-body.dark input{background:#2a2a2a;color:#eee;border-color:#555;}
-label{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:16px;}
+html, body {margin:0;font-family:-apple-system,Arial,sans-serif;height:100%;width:100%;background:#f4f4f4;color:#333;display:flex;flex-direction:column;}
+body.dark {background:#121212;color:#eee;}
+.box {background:#fff;padding:16px;margin:16px;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+body.dark .box {background:#1e1e1e;}
+button {padding:12px;width:100%;margin-top:8px;border-radius:10px;border:none;background:#1976d2;color:#fff;cursor:pointer;}
+button.secondary {background:#ccc;color:#000;}
+button.danger {background:#d32f2f;}
+#tabBar {position:fixed;bottom:0;left:0;right:0;height:60px;display:flex;border-top:1px solid #ccc;background:#fff;}
+.tab {flex:1;text-align:center;line-height:60px;cursor:pointer;}
+.tab.active {color:#1976d2;font-weight:bold;}
+input {width:calc(50% - 12px);padding:8px;margin:8px 6px 0 0;border:1px solid #ccc;border-radius:6px;font-size:16px;}
+body.dark input {background:#2a2a2a;color:#eee;border-color:#555;}
+label {display:flex;align-items:center;gap:6px;margin-top:12px;font-size:16px;}
+#result {margin-top:12px;font-weight:bold;}
 </style>
-
 </head>
 <body>
 
-<div id="splash" style="position:fixed;inset:0;background:#1976d2;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px">
-  Betöltés…
+<div id="splash" style="position:fixed;inset:0;background:#1976d2;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;z-index:9999">
+Betöltés…
 </div>
 
-<main style="display:none">
+<main style="display:none;flex:1;overflow-y:auto">
   <section id="home" class="box">
     <h3>Számítás</h3>
     <input id="carbs" placeholder="Szénhidrát (g)" type="number" min="0">
     <input id="bg" placeholder="Vércukor (mmol/L)" type="number" step="0.1" min="0">
     <button onclick="calculate()">Számolás</button>
-    <div id="result" style="margin-top:12px;"></div>
-    <button id="injectBtn" class="secondary" style="display:none;margin-top:8px;" onclick="inject()">Beadás</button>
-    <button id="cancelBtn" class="secondary" style="display:none;margin-top:8px;" onclick="cancel()">Mégse</button>
+    <div id="result"></div>
+    <button id="injectBtn" class="secondary" style="display:none;" onclick="inject()">Beadás</button>
+    <button id="cancelBtn" class="secondary" style="display:none;" onclick="cancel()">Mégse</button>
   </section>
 
   <section id="log" class="box" style="display:none">
@@ -67,10 +67,113 @@ label{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:16px;}
   <div class="tab" data-tab="settings">Beállítások</div>
 </div>
 
-<script src="storage.js"></script>
-<script src="calc.js"></script>
-<script src="ui.js"></script>
-<script src="app.js"></script>
+<script>
+// ---- STORAGE ----
+function getBolusHistory() { return JSON.parse(localStorage.getItem("boluses")||"[]"); }
+function saveBolus(units, carbs, bg){
+  const h = getBolusHistory();
+  h.push({units, carbs, bg, time: Date.now()});
+  localStorage.setItem("boluses", JSON.stringify(h));
+}
+
+// ---- SETTINGS ----
+let INSULIN_DURATION = 180*60*1000;
+function saveSettings(){
+  const s = {cr:parseFloat(cr.value), target:parseFloat(target.value), isf:parseFloat(isf.value), dark:darkToggle.checked, duration:INSULIN_DURATION/60000};
+  localStorage.setItem("settings", JSON.stringify(s));
+  alert("Beállítások mentve");
+  loadSettings();
+}
+function loadSettings(){
+  const s = JSON.parse(localStorage.getItem("settings")||"{}");
+  if(s.cr) cr.value=s.cr;
+  if(s.target) target.value=s.target;
+  if(s.isf) isf.value=s.isf;
+  if(s.dark) document.body.classList.add('dark'); else document.body.classList.remove('dark');
+  darkToggle.checked = !!s.dark;
+  if(s.duration) INSULIN_DURATION = s.duration*60*1000;
+}
+
+// ---- IOB & CALC ----
+function calcIOB(){
+  const now=Date.now();
+  let total=0, valid=[];
+  let remainingMs=0;
+  getBolusHistory().forEach(b=>{
+    const elapsed = now - b.time;
+    if(elapsed < INSULIN_DURATION){
+      total += b.units*(1 - elapsed/INSULIN_DURATION);
+      remainingMs = Math.max(remainingMs, INSULIN_DURATION - elapsed);
+      valid.push(b);
+    }
+  });
+  localStorage.setItem("boluses", JSON.stringify(valid));
+  return {total, remainingMs};
+}
+let lastBolus=0;
+const HYPO_LIMIT = 4.0;
+
+function calculate(){
+  const carbsNum=parseFloat(carbs.value), bgNum=parseFloat(bg.value);
+  const s = JSON.parse(localStorage.getItem("settings")||"{}");
+  if([carbsNum,bgNum,s.cr,s.target,s.isf].some(v=>v===undefined||v===null)){ alert("Hiányzó adat!"); return; }
+  const iob = calcIOB().total;
+  const meal = carbsNum / s.cr;
+  const corr = bgNum>=HYPO_LIMIT ? Math.max(0,(bgNum - s.target)/s.isf - iob) : 0;
+  lastBolus = meal + corr;
+  result.innerHTML = `Étkezési: <b>${meal.toFixed(2)} E</b><br>Korrekció: <b>${corr.toFixed(2)} E</b><br><strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
+  injectBtn.style.display = cancelBtn.style.display = "block";
+}
+function inject(){ saveBolus(lastBolus, parseFloat(carbs.value), parseFloat(bg.value)); clearCalc(); renderHistory(); }
+function cancel(){ clearCalc(); }
+function clearCalc(){ result.innerHTML=""; injectBtn.style.display = cancelBtn.style.display = "none"; }
+
+// ---- UI ----
+function renderHistory(){
+  const h = getBolusHistory().slice(-10).reverse();
+  history.innerHTML = h.length ? h.map(b=>`<div>${new Date(b.time).toLocaleString()} - ${b.units.toFixed(2)} E / ${b.carbs} g / ${b.bg} mmol/L</div>`).join('') : "<div>Nincs adat</div>";
+}
+
+function resetAll(){ if(confirm("Biztos törlöd az összes adatot?")){ localStorage.clear(); location.reload(); } }
+
+// ---- TABS ----
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    document.querySelectorAll("main section").forEach(s=>s.style.display="none");
+    document.getElementById(tab.dataset.tab).style.display="block";
+    if(tab.dataset.tab==="log") renderHistory();
+  });
+});
+
+// ---- DARK MODE ----
+darkToggle.addEventListener("change", ()=>{document.body.classList.toggle('dark'); saveSettings();});
+
+// ---- INIT ----
+window.addEventListener('load', ()=>{
+  loadSettings();
+  renderHistory();
+
+  const splash = document.getElementById("splash");
+  const main = document.querySelector("main");
+  const tabBar = document.getElementById("tabBar");
+
+  splash.addEventListener("animationend", ()=>{
+    splash.style.display = "none";
+    main.style.display = "flex";
+    tabBar.style.display = "flex";
+  });
+
+  // ha nincs animáció, eltűntetjük 2 mp után
+  setTimeout(()=>{ splash.style.display="none"; main.style.display="flex"; tabBar.style.display="flex"; }, 2000);
+
+  // SERVICE WORKER
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("/bolus-pwa/sw.js");
+  }
+});
+</script>
 
 </body>
 </html>
