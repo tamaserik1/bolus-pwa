@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <title>Bolus varázsló</title>
-<link rel="manifest" href="manifest.json">
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1976d2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bolus">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
 <style>
 :root {
@@ -31,284 +33,221 @@
   --bg-input:#fff;
   --bg-input-dark:#2a2a2a;
 }
-html,body{height:100%;width:100%;margin:0;padding:0;font-family:-apple-system,Arial,sans-serif;display:flex;flex-direction:column;background:var(--bg);color:var(--text);}
+
+html,body{
+  height:100%;
+  margin:0;
+  font-family:-apple-system,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
 body.dark{background:var(--bg-dark);color:var(--text-dark);}
 *{box-sizing:border-box;}
 
-#splash{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--primary);display:flex;flex-direction:column;justify-content:center;align-items:center;color:white;font-weight:bold;font-size:24px;z-index:9999;user-select:none;animation:splashFadeOut 1.5s ease forwards;animation-delay:1.5s;}
-#splash img{width:120px;height:120px;margin-bottom:20px;animation:splashScale 1.5s ease forwards;}
-@keyframes splashScale{0%{transform:scale(1);opacity:1}100%{transform:scale(1.1);opacity:0}}
-@keyframes splashFadeOut{to{opacity:0;visibility:hidden;pointer-events:none}}
+#splash{
+  position:fixed;
+  inset:0;
+  background:var(--primary);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  color:white;
+  font-weight:bold;
+  font-size:24px;
+  z-index:9999;
+  animation:splashFadeOut 1.5s ease forwards;
+  animation-delay:1.5s;
+}
 
-main{flex:1;display:flex;flex-direction:column;overflow-y:auto;padding:15px;padding-bottom:calc(80px + env(safe-area-inset-bottom));}
+#splash img{
+  width:120px;
+  height:120px;
+  margin-bottom:20px;
+  animation:splashScale 1.5s ease forwards;
+}
 
-h3{font-size:18px;margin-bottom:8px;}
+@keyframes splashScale{to{transform:scale(1.1);opacity:0}}
+@keyframes splashFadeOut{to{opacity:0;visibility:hidden}}
 
-label{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:16px;}
-label span{color:var(--text-small);}
-input{flex:1;padding:8px;font-size:16px;margin-left:10px;border:none;border-bottom:1px solid var(--secondary);border-radius:0;background:var(--bg-input);color:var(--text);transition:background 0.3s,color 0.3s;}
-body.dark input{background:var(--bg-input-dark);color:var(--text-dark);border-color:var(--secondary);}
-button{margin-top:12px;padding:14px;width:100%;font-size:18px;border:none;border-radius:10px;background:var(--primary);color:white;cursor:pointer;}
-button:active{transform:scale(0.97);}
-.secondary{background:var(--secondary);color:black;}
-.danger{background:var(--danger);}
-.small{font-size:14px;color:var(--text-small);}
-body.dark .small{color:var(--text-small-dark);}
+main{
+  display:none;
+  padding:15px;
+  padding-bottom:calc(80px + env(safe-area-inset-bottom));
+}
 
-.box{background:var(--bg-box);padding:16px;margin-bottom:16px;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1);transition:background 0.3s;}
-body.dark .box{background:var(--bg-box-dark);}
+h3{margin:0 0 8px}
 
-.history-item{padding:10px 0;border-bottom:1px solid var(--secondary);font-size:16px;line-height:1.4;display:flex;justify-content:flex-start;align-items:center;gap:8px;}
-.insulin-unit{background:var(--insulin);color:white;padding:2px 8px;border-radius:6px;font-weight:600;min-width:50px;text-align:center;display:inline-block;}
-.carb-unit{background:var(--carb);color:white;padding:2px 8px;border-radius:6px;font-weight:600;min-width:50px;text-align:center;display:inline-block;}
-.bg-unit{background:purple;color:white;padding:2px 8px;border-radius:6px;font-weight:600;min-width:50px;text-align:center;display:inline-block;}
-body.dark .insulin-unit{background:var(--insulin-dark);}
-body.dark .carb-unit{background:var(--carb-dark);}
+label{margin-top:12px;display:block}
+input{width:100%;padding:8px;font-size:16px;border:none;border-bottom:1px solid var(--secondary)}
+button{margin-top:12px;padding:14px;width:100%;font-size:18px;border:none;border-radius:10px;background:var(--primary);color:white}
 
-#tabBar{display:flex;height:70px;border-top:1px solid var(--secondary);background:var(--bg-box);padding-bottom:env(safe-area-inset-bottom);}
-.tab{flex:1;text-align:center;font-size:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;color:var(--text-small);cursor:pointer;gap:2px;}
-.tab.active{color:var(--primary);}
-.tab svg{width:28px;height:28px;margin-bottom:2px;fill:currentColor;}
+.secondary{background:var(--secondary);color:black}
+.danger{background:var(--danger)}
 
-section{display:none;flex:1;flex-direction:column;}
-section.active{display:flex;flex-direction:column;}
-.disclaimer{font-size:14px;color:var(--text-small);line-height:1.4;margin-top:10px;}
-body.dark .disclaimer{color:var(--text-small-dark);}
+.box{
+  background:var(--bg-box);
+  padding:16px;
+  margin-bottom:16px;
+  border-radius:12px;
+}
 
-/* Dark mode toggle style */
-.toggle{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:16px;}
-.toggle input{width:auto;margin-left:10px;}
+body.dark .box{background:var(--bg-box-dark)}
+
+#tabBar{
+  display:none;
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:70px;
+  background:var(--bg-box);
+  border-top:1px solid var(--secondary);
+  padding-bottom:env(safe-area-inset-bottom);
+  display:flex;
+}
+
+.tab{
+  flex:1;
+  text-align:center;
+  font-size:14px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  color:var(--text-small);
+}
+
+.tab.active{color:var(--primary)}
+
+section{display:none}
+section.active{display:block}
+.small{font-size:14px;color:var(--text-small)}
 </style>
 </head>
+
 <body>
 
 <div id="splash">
-  <img src="icon-512.png" alt="Bolus ikon">
-  Betöltés...
+  <img src="/icon-512.png" alt="Bolus">
+  Betöltés…
 </div>
 
-<main style="display:none;">
+<main>
 <section id="home" class="active">
   <div class="box">
     <h3>Számítás</h3>
     <label>Szénhidrát (g)</label>
     <input id="carbs" type="number">
-    <label>Aktuális vércukor (mmol/L)</label>
+    <label>Vércukor (mmol/L)</label>
     <input id="bg" type="number" step="0.1">
     <button onclick="calculate()">Számolás</button>
-    <div id="result" style="margin-top:12px;"></div>
-    <button id="injectBtn" style="display:none;" onclick="inject()">Beadás</button>
-    <button id="cancelBtn" class="secondary" style="display:none;" onclick="cancel()">Mégse</button>
+    <div id="result"></div>
+    <button id="injectBtn" style="display:none" onclick="inject()">Beadás</button>
+    <button id="cancelBtn" class="secondary" style="display:none" onclick="cancel()">Mégse</button>
   </div>
 
   <div class="box">
     <h3>Aktív inzulin</h3>
     <div id="iob"></div>
   </div>
-
-  <div class="box">
-    <h3>Előzmények (utolsó 10)</h3>
-    <div id="history"></div>
-  </div>
-
-  <div class="box disclaimer">
-    Ez az alkalmazás nem minősül orvosi eszköznek.<br>
-    A számítások tájékoztató jellegűek, nem helyettesítik az orvosi döntést.
-  </div>
-</section>
-
-<section id="log">
-  <div class="box">
-    <h3>Előzmények (1 hónap)</h3>
-    <div id="fullHistory"></div>
-  </div>
 </section>
 
 <section id="settings">
   <div class="box">
     <h3>Beállítások</h3>
-    <label>Szénhidrát–inzulin arány <span id="crVal"></span></label>
+    <label>CH–inzulin arány</label>
     <input id="cr" type="number" step="0.1">
-    <label>Cél vércukor <span id="targetVal"></span></label>
+    <label>Cél vércukor</label>
     <input id="target" type="number" step="0.1" value="5.5">
-    <label>Inzulinérzékenység <span id="isfVal"></span></label>
+    <label>Inzulinérzékenység</label>
     <input id="isf" type="number" step="0.1">
-    <label>Inzulinhatás időtartama (perc) <span id="durationVal"></span></label>
-    <input id="duration" type="number" step="1" min="10" value="180">
-
-    <div class="toggle">
-      <span>Sötét mód</span>
-      <input type="checkbox" id="darkModeToggle">
-    </div>
-
+    <label>Hatásidő (perc)</label>
+    <input id="duration" type="number" value="180">
     <button onclick="saveSettings()">Mentés</button>
     <button class="danger" onclick="resetAll()">MINDEN TÖRLÉSE</button>
   </div>
 </section>
 </main>
 
-<div id="tabBar" style="display:none;">
-  <div class="tab active" data-tab="home">
-    <svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9v9a3 3 0 0 1-3 3h-12a3 3 0 0 1-3-3z"/></svg>
-    Kezdőoldal
-  </div>
-  <div class="tab" data-tab="log">
-    <svg viewBox="0 0 24 24"><path d="M3 3h18v18h-18z"/></svg>
-    Napló
-  </div>
-  <div class="tab" data-tab="settings">
-    <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.03-.66-.07-.98l2.11-1.65a.502.502 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a6.992 6.992 0 0 0-1.7-.98l-.38-2.65A.5.5 0 0 0 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.63.24-1.22.57-1.7.98l-2.49-1a.5.5 0 0 0-.61.22l-2 3.46c-.14.24-.08.55.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65a.502.502 0 0 0-.12.64l2 3.46c.14.24.43.34.61.22l2.49-1c.48.41 1.07.74 1.7.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.63-.24 1.22-.57 1.7-.98l2.49 1c.18.12.47.02.61-.22l2-3.46a.502.502 0 0 0-.12-.64l-2.11-1.65z"/></svg>
-    Beállítások
-  </div>
+<div id="tabBar">
+  <div class="tab active" data-tab="home">Kezdő</div>
+  <div class="tab" data-tab="settings">Beállítások</div>
 </div>
 
 <script>
-const $ = id => document.getElementById(id);
-let lastBolus = null;
-let INSULIN_DURATION = 180*60*1000;
-const HYPO_LIMIT = 4.0;
+const $=id=>document.getElementById(id);
+let INSULIN_DURATION=180*60*1000;
+let lastBolus=null;
 
-/* SETTINGS */
-function saveSettings(){
-  const crVal=getNum("cr"), targetVal=getNum("target"), isfVal=getNum("isf"), durationVal=getNum("duration");
-  if(durationVal < 10){ alert("Az inzulinhatás időtartama legalább 10 perc!"); return; }
-  localStorage.setItem("settings",JSON.stringify({cr:crVal,target:targetVal,isf:isfVal,duration:durationVal,dark:$('#darkModeToggle').checked}));
-  INSULIN_DURATION = durationVal*60*1000;
-  alert("Beállítások mentve");
-  updateSettingLabels();
+function getNum(id){
+  const v=parseFloat($(id).value);
+  return isNaN(v)?null:v;
 }
+
+function saveSettings(){
+  localStorage.setItem("settings",JSON.stringify({
+    cr:getNum("cr"),
+    target:getNum("target"),
+    isf:getNum("isf"),
+    duration:getNum("duration")
+  }));
+  alert("Mentve");
+}
+
 function loadSettings(){
   const s=JSON.parse(localStorage.getItem("settings")||"{}");
   if(s.cr) cr.value=s.cr;
   if(s.target) target.value=s.target;
   if(s.isf) isf.value=s.isf;
-  if(s.duration){ duration.value=s.duration; INSULIN_DURATION = s.duration*60*1000; } else { INSULIN_DURATION = 180*60*1000; }
-  if(s.dark) document.body.classList.add('dark');
-  $('#darkModeToggle').checked = !!s.dark;
-  updateSettingLabels();
+  if(s.duration) INSULIN_DURATION=s.duration*60000;
 }
 
-function updateSettingLabels(){
-  $('#crVal').innerText = $('#cr').value ? $('#cr').value+' g/E' : '';
-  $('#targetVal').innerText = $('#target').value ? $('#target').value+' mmol/L' : '';
-  $('#isfVal').innerText = $('#isf').value ? $('#isf').value+' mmol/L/E' : '';
-  $('#durationVal').innerText = $('#duration').value ? $('#duration').value+' perc' : '';
-}
-
-/* STORAGE */
-function getBolusHistory(){ return JSON.parse(localStorage.getItem("boluses")||"[]"); }
-function saveBolus(units, carbs, bg){
-  const h=getBolusHistory();
-  h.push({units, carbs, bg, time: Date.now()});
-  localStorage.setItem("boluses",JSON.stringify(h));
-}
-
-/* IOB */
-function calcIOB(){
-  const now=Date.now(), valid=[];
-  let total=0, remainingMs=0;
-  getBolusHistory().forEach(b=>{
-    const elapsed=now-b.time;
-    if(elapsed<INSULIN_DURATION){
-      const r=1-elapsed/INSULIN_DURATION;
-      total+=b.units*r;
-      remainingMs=Math.max(remainingMs,INSULIN_DURATION-elapsed);
-      valid.push(b);
-    }
-  });
-  localStorage.setItem("boluses", JSON.stringify(valid));
-  return {total, remainingMs};
-}
-
-/* CALC */
 function calculate(){
-  const carbs=getNum("carbs"), bg=getNum("bg"), s=JSON.parse(localStorage.getItem("settings")||"{}");
-  if([carbs,bg,s.cr,s.target,s.isf].some(v=>v===null)){ alert("Hiányzó adat!"); return; }
-  const {total:iob}=calcIOB();
+  const carbs=getNum("carbs"), bg=getNum("bg");
+  const s=JSON.parse(localStorage.getItem("settings")||"{}");
+  if(!carbs||!bg||!s.cr||!s.target||!s.isf){alert("Hiányzó adat");return;}
   const meal=carbs/s.cr;
-  const corr=bg>=HYPO_LIMIT?Math.max(0,(bg-s.target)/s.isf-iob):0;
-  lastBolus = meal+corr;
-  result.innerHTML=`
-    Étkezési: <b>${meal.toFixed(2)} E</b><br>
-    Korrekció: <b>${corr.toFixed(2)} E</b><br><br>
-    <strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>
-  `;
-  injectBtn.style.display = cancelBtn.style.display = "block";
+  const corr=Math.max(0,(bg-s.target)/s.isf);
+  lastBolus=meal+corr;
+  result.innerHTML=`<b>${lastBolus.toFixed(2)} E</b>`;
+  injectBtn.style.display=cancelBtn.style.display="block";
 }
 
 function inject(){
-  const carbs=getNum("carbs"), bg=getNum("bg");
-  saveBolus(lastBolus, carbs, bg);
-  clearCalc(); updateIOB(); renderHistory(); renderFullHistory();
-}
-function cancel(){ clearCalc(); }
-function clearCalc(){ result.innerHTML=""; injectBtn.style.display = cancelBtn.style.display = "none"; }
-
-/* UI */
-function updateIOB(){
-  const {total, remainingMs}=calcIOB();
-  iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br><span class="small">Hátralévő idő: ${Math.ceil(remainingMs/60000)} perc</span>`;
+  alert("Beadás rögzítve");
+  cancel();
 }
 
-function renderHistory(){
-  const historyDiv=$("history");
-  const h=getBolusHistory().slice(-10).reverse();
-  historyDiv.innerHTML=h.length ? h.map(b=>`<div class="history-item">
-    <span class="insulin-unit">${b.units.toFixed(2)} E</span>
-    <span class="carb-unit">${b.carbs} g CH</span>
-    <span class="bg-unit">${b.bg} mmol/L</span>
-    <span class="small">${new Date(b.time).toLocaleString()}</span>
-  </div>`).join("") : "<span class='small'>Nincs adat</span>";
+function cancel(){
+  result.innerHTML="";
+  injectBtn.style.display=cancelBtn.style.display="none";
 }
 
-function renderFullHistory(){
-  const fullHistoryDiv=$("fullHistory");
-  const now=Date.now(), monthAgo=now-30*24*60*60*1000;
-  const h=getBolusHistory().filter(b=>b.time>=monthAgo).reverse();
-  fullHistoryDiv.innerHTML=h.length ? h.map(b=>`<div class="history-item">
-    <span class="insulin-unit">${b.units.toFixed(2)} E</span>
-    <span class="carb-unit">${b.carbs} g CH</span>
-    <span class="bg-unit">${b.bg} mmol/L</span>
-    <span class="
-    <span class="small">${new Date(b.time).toLocaleString()}</span>
-  </div>`).join("") : "<span class='small'>Nincs adat</span>";
-}
-
-/* TAB NAV */
 document.querySelectorAll(".tab").forEach(tab=>{
-  tab.addEventListener("click", ()=>{
+  tab.onclick=()=>{
     document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    tab.classList.add("active");
     document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+    tab.classList.add("active");
     document.getElementById(tab.dataset.tab).classList.add("active");
-    if(tab.dataset.tab==="home") renderHistory();
-    if(tab.dataset.tab==="log") renderFullHistory();
+  };
+});
+
+window.onload=()=>{
+  loadSettings();
+  $("splash").addEventListener("animationend",()=>{
+    $("splash").style.display="none";
+    document.querySelector("main").style.display="block";
+    $("tabBar").style.display="flex";
   });
-});
-
-/* RESET */
-function resetAll(){ if(confirm("Biztos törlöd az összes adatot?")){ localStorage.clear(); location.reload(); } }
-function getNum(id){ const v=parseFloat($(id).value); return isNaN(v)?null:v; }
-
-/* DARK MODE TOGGLE */
-$('#darkModeToggle').addEventListener('change', e=>{
-  if(e.target.checked) document.body.classList.add('dark');
-  else document.body.classList.remove('dark');
-  saveSettings();
-});
-
-/* INIT */
-window.onload = () => {
-  loadSettings(); updateIOB(); renderHistory(); renderFullHistory();
-  updateSettingLabels();
-  setInterval(updateIOB,60000);
-
-  const splash=document.getElementById("splash"), main=document.querySelector("main"), tabBar=document.getElementById("tabBar");
-  splash.addEventListener("animationend",()=>{ splash.style.display="none"; main.style.display="flex"; tabBar.style.display="flex"; });
 };
 
 /* SERVICE WORKER */
-if("serviceWorker" in navigator){ navigator.serviceWorker.register("./sw.js"); }
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js");
+  });
+}
 </script>
 
 </body>
