@@ -3,36 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <title>Bolus varázsló</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#F5F5F4">
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#E6E7E8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bolus">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <style>
-/* ===== LIGHT MODE ===== */
+/* ===== COLOR SYSTEM ===== */
 :root{
-  --bg:#F5F5F4;
+  --bg:#F4F4F3;
   --card:#FFFFFF;
-  --text:#2A2A2A;
-  --muted:#8A8A8A;
-  --soft:#EFEFEF;
-  --accent:#DADADA;
+  --text:#2B2B2B;
+  --muted:#6F6F6F;
+  --soft:#ECECEC;
 
   --pill-ins-bg:rgba(120,140,160,.18);
   --pill-ins-tx:#3B4A5A;
   --pill-carb-bg:rgba(120,160,140,.20);
   --pill-carb-tx:#355B48;
-  --pill-bg-bg:rgba(150,150,150,.18);
+  --pill-bg-bg:rgba(160,160,160,.20);
   --pill-bg-tx:#444;
 }
 
-/* ===== DARK MODE ===== */
 @media (prefers-color-scheme: dark){
 :root{
-  --bg:#1E1F21;
+  --bg:#1F2123;
   --card:#2A2C2F;
   --text:#E6E6E6;
   --muted:#A0A0A0;
   --soft:#3A3C40;
-  --accent:#444;
 
   --pill-ins-bg:rgba(120,140,160,.35);
   --pill-ins-tx:#DCE6F0;
@@ -44,26 +49,48 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
 body{
+  font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
   background:var(--bg);
   color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
 }
 
-main{padding:18px;padding-bottom:90px}
+/* SPLASH */
+#splash{
+  position:fixed;inset:0;
+  background:#1976d2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  z-index:9999;
+  animation:fadeOut 1.5s ease forwards;
+  animation-delay:1.5s;
+}
+#splash img{width:120px;margin-bottom:20px}
+@keyframes fadeOut{to{opacity:0;visibility:hidden}}
+
+main{
+  display:none;
+  padding:16px;
+  padding-bottom:90px;
+}
+
 section{display:none}
 section.active{display:block}
 
 .box{
   background:var(--card);
-  padding:20px;
-  margin-bottom:20px;
   border-radius:22px;
-  box-shadow:0 10px 25px rgba(0,0,0,.08);
+  padding:18px;
+  margin-bottom:18px;
+  box-shadow:0 8px 24px rgba(0,0,0,.08);
 }
 
 h3{font-size:17px;margin-bottom:10px}
-label{margin-top:14px;display:block;color:var(--muted)}
+label{display:block;margin-top:12px;color:var(--muted)}
 input{
   width:100%;
   margin-top:6px;
@@ -75,12 +102,12 @@ input{
 }
 
 button{
-  margin-top:16px;
-  padding:14px;
+  margin-top:14px;
   width:100%;
+  padding:14px;
   border:none;
   border-radius:14px;
-  background:var(--accent);
+  background:#DADADA;
   color:var(--text);
 }
 
@@ -103,10 +130,10 @@ button{
 #tabBar{
   position:fixed;
   bottom:0;left:0;right:0;
-  height:72px;
-  display:flex;
+  height:75px;
   background:var(--card);
-  border-top:1px solid var(--accent);
+  display:flex;
+  border-top:1px solid #ccc;
 }
 .tab{
   flex:1;
@@ -117,7 +144,7 @@ button{
   font-size:13px;
   color:var(--muted);
 }
-.tab.active{color:var(--text)}
+.tab.active{color:#1976d2}
 .tab svg{
   width:22px;height:22px;
   stroke:currentColor;
@@ -130,8 +157,14 @@ button{
 
 <body>
 
+<div id="splash">
+  <img src="icon-512.png">
+  Betöltés…
+</div>
+
 <main>
 <section id="home" class="active">
+
   <div class="box">
     <h3>Számítás</h3>
     <label>Szénhidrát (g)</label>
@@ -147,6 +180,7 @@ button{
     <h3>Előzmények (utolsó 10)</h3>
     <div id="history"></div>
   </div>
+
 </section>
 
 <section id="log">
@@ -167,7 +201,7 @@ button{
 </section>
 </main>
 
-<div id="tabBar">
+<div id="tabBar" style="display:none">
   <div class="tab active" data-tab="home">
     <svg viewBox="0 0 24 24"><path d="M4 12L12 4L20 12"/><path d="M9 21V12H15V21"/></svg>
     Kezdőoldal
@@ -184,6 +218,7 @@ button{
 
 <script>
 const $=id=>document.getElementById(id);
+let lastBolus=null;
 
 function getBolusHistory(){
  return JSON.parse(localStorage.getItem("boluses")||"[]");
@@ -206,10 +241,14 @@ function historyRow(b){
 
 function renderHistory(){
  const h=getBolusHistory().slice(-10).reverse();
- history.innerHTML=h.map(historyRow).join("")||"<span class='small'>Nincs adat</span>";
+ history.innerHTML=h.length?h.map(historyRow).join(""):"<span class='small'>Nincs adat</span>";
 }
 function renderFullHistory(){
- fullHistory.innerHTML=getBolusHistory().reverse().map(historyRow).join("");
+ const now=Date.now(),monthAgo=now-30*24*60*60*1000;
+ fullHistory.innerHTML=getBolusHistory()
+  .filter(b=>b.time>=monthAgo)
+  .reverse()
+  .map(historyRow).join("")||"<span class='small'>Nincs adat</span>";
 }
 
 function calculate(){
@@ -219,7 +258,8 @@ function calculate(){
 }
 function inject(){
  saveBolus(lastBolus,+carbs.value,+bg.value);
- renderHistory();renderFullHistory();
+ renderHistory();
+ renderFullHistory();
 }
 
 document.querySelectorAll(".tab").forEach(t=>{
@@ -228,11 +268,23 @@ document.querySelectorAll(".tab").forEach(t=>{
   t.classList.add("active");
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   $(t.dataset.tab).classList.add("active");
-  renderHistory();renderFullHistory();
  };
 });
 
-renderHistory();renderFullHistory();
+window.onload=()=>{
+ document.getElementById("splash").addEventListener("animationend",()=>{
+  splash.style.display="none";
+  main.style.display="block";
+  tabBar.style.display="flex";
+ });
+ renderHistory();
+ renderFullHistory();
+};
+
+if("serviceWorker" in navigator){
+ navigator.serviceWorker.register("./sw.js");
+}
 </script>
+
 </body>
 </html>
