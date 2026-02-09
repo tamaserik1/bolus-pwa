@@ -4,251 +4,70 @@
 <meta charset="UTF-8">
 <title>Bolus varázsló</title>
 
-<!-- PWA -->
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="/bolus-pwa/manifest.json">
 <meta name="theme-color" content="#1976d2">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Bolus">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/bolus-pwa/icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<style>
-:root {
-  --bg:#f4f4f4;
-  --bg-box:#fff;
-  --primary:#1976d2;
-  --secondary:#ccc;
-  --danger:#d32f2f;
-  --text:#333;
-  --text-small:#555;
-  --insulin:#1976d2;
-  --carb:#388e3c;
-  --bg-dark:#121212;
-  --bg-box-dark:#1e1e1e;
-  --text-dark:#eee;
-  --text-small-dark:#aaa;
-  --insulin-dark:#1976d2;
-  --carb-dark:#388e3c;
-  --bg-input:#fff;
-  --bg-input-dark:#2a2a2a;
-}
+<link rel="stylesheet" href="data:text/css,
+html,body{margin:0;font-family:-apple-system,Arial,sans-serif}
+body.dark{background:#121212;color:#eee}
+.box{background:#fff;padding:16px;margin:16px;border-radius:12px}
+body.dark .box{background:#1e1e1e}
+button{padding:12px;width:100%;margin-top:8px;border-radius:10px;border:none;background:#1976d2;color:#fff}
+.secondary{background:#ccc;color:#000}
+.danger{background:#d32f2f}
+#tabBar{position:fixed;bottom:0;left:0;right:0;height:60px;display:flex;border-top:1px solid #ccc;background:#fff}
+.tab{flex:1;text-align:center;line-height:60px}
+.tab.active{color:#1976d2;font-weight:bold}
+">
 
-html,body{
-  height:100%;
-  margin:0;
-  font-family:-apple-system,Arial,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
-
-body.dark{background:var(--bg-dark);color:var(--text-dark);}
-*{box-sizing:border-box;}
-
-#splash{
-  position:fixed;
-  inset:0;
-  background:var(--primary);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  color:white;
-  font-weight:bold;
-  font-size:24px;
-  z-index:9999;
-  animation:splashFadeOut 1.5s ease forwards;
-  animation-delay:1.5s;
-}
-
-#splash img{
-  width:120px;
-  height:120px;
-  margin-bottom:20px;
-  animation:splashScale 1.5s ease forwards;
-}
-
-@keyframes splashScale{to{transform:scale(1.1);opacity:0}}
-@keyframes splashFadeOut{to{opacity:0;visibility:hidden}}
-
-main{
-  display:none;
-  padding:15px;
-  padding-bottom:calc(80px + env(safe-area-inset-bottom));
-}
-
-h3{margin:0 0 8px}
-
-label{margin-top:12px;display:block}
-input{width:100%;padding:8px;font-size:16px;border:none;border-bottom:1px solid var(--secondary)}
-button{margin-top:12px;padding:14px;width:100%;font-size:18px;border:none;border-radius:10px;background:var(--primary);color:white}
-
-.secondary{background:var(--secondary);color:black}
-.danger{background:var(--danger)}
-
-.box{
-  background:var(--bg-box);
-  padding:16px;
-  margin-bottom:16px;
-  border-radius:12px;
-}
-
-body.dark .box{background:var(--bg-box-dark)}
-
-#tabBar{
-  display:none;
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  height:70px;
-  background:var(--bg-box);
-  border-top:1px solid var(--secondary);
-  padding-bottom:env(safe-area-inset-bottom);
-  display:flex;
-}
-
-.tab{
-  flex:1;
-  text-align:center;
-  font-size:14px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  color:var(--text-small);
-}
-
-.tab.active{color:var(--primary)}
-
-section{display:none}
-section.active{display:block}
-.small{font-size:14px;color:var(--text-small)}
-</style>
 </head>
-
 <body>
 
-<div id="splash">
-  <img src="/icon-512.png" alt="Bolus">
-  Betöltés…
+<div id="splash" style="position:fixed;inset:0;background:#1976d2;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px">
+Betöltés…
 </div>
 
-<main>
-<section id="home" class="active">
-  <div class="box">
-    <h3>Számítás</h3>
-    <label>Szénhidrát (g)</label>
-    <input id="carbs" type="number">
-    <label>Vércukor (mmol/L)</label>
-    <input id="bg" type="number" step="0.1">
-    <button onclick="calculate()">Számolás</button>
-    <div id="result"></div>
-    <button id="injectBtn" style="display:none" onclick="inject()">Beadás</button>
-    <button id="cancelBtn" class="secondary" style="display:none" onclick="cancel()">Mégse</button>
-  </div>
-
-  <div class="box">
-    <h3>Aktív inzulin</h3>
-    <div id="iob"></div>
-  </div>
+<main style="display:none">
+<section id="home" class="box">
+  <h3>Számítás</h3>
+  <input id="carbs" placeholder="Szénhidrát (g)" type="number">
+  <input id="bg" placeholder="Vércukor" type="number" step="0.1">
+  <button onclick="calculate()">Számolás</button>
+  <div id="result"></div>
+  <button id="injectBtn" style="display:none" onclick="inject()">Beadás</button>
+  <button id="cancelBtn" class="secondary" style="display:none" onclick="cancel()">Mégse</button>
 </section>
 
-<section id="settings">
-  <div class="box">
-    <h3>Beállítások</h3>
-    <label>CH–inzulin arány</label>
-    <input id="cr" type="number" step="0.1">
-    <label>Cél vércukor</label>
-    <input id="target" type="number" step="0.1" value="5.5">
-    <label>Inzulinérzékenység</label>
-    <input id="isf" type="number" step="0.1">
-    <label>Hatásidő (perc)</label>
-    <input id="duration" type="number" value="180">
-    <button onclick="saveSettings()">Mentés</button>
-    <button class="danger" onclick="resetAll()">MINDEN TÖRLÉSE</button>
-  </div>
+<section id="log" class="box" style="display:none">
+  <h3>Előzmények</h3>
+  <div id="history"></div>
+</section>
+
+<section id="settings" class="box" style="display:none">
+  <h3>Beállítások</h3>
+  <input id="cr" placeholder="CH / E" type="number">
+  <input id="target" placeholder="Cél vércukor" type="number" step="0.1">
+  <input id="isf" placeholder="Érzékenység" type="number" step="0.1">
+  <label><input type="checkbox" id="darkToggle"> Sötét mód</label>
+  <button onclick="saveSettings()">Mentés</button>
+  <button class="danger" onclick="resetAll()">MINDEN TÖRLÉSE</button>
 </section>
 </main>
 
-<div id="tabBar">
+<div id="tabBar" style="display:none">
   <div class="tab active" data-tab="home">Kezdő</div>
+  <div class="tab" data-tab="log">Napló</div>
   <div class="tab" data-tab="settings">Beállítások</div>
 </div>
 
-<script>
-const $=id=>document.getElementById(id);
-let INSULIN_DURATION=180*60*1000;
-let lastBolus=null;
-
-function getNum(id){
-  const v=parseFloat($(id).value);
-  return isNaN(v)?null:v;
-}
-
-function saveSettings(){
-  localStorage.setItem("settings",JSON.stringify({
-    cr:getNum("cr"),
-    target:getNum("target"),
-    isf:getNum("isf"),
-    duration:getNum("duration")
-  }));
-  alert("Mentve");
-}
-
-function loadSettings(){
-  const s=JSON.parse(localStorage.getItem("settings")||"{}");
-  if(s.cr) cr.value=s.cr;
-  if(s.target) target.value=s.target;
-  if(s.isf) isf.value=s.isf;
-  if(s.duration) INSULIN_DURATION=s.duration*60000;
-}
-
-function calculate(){
-  const carbs=getNum("carbs"), bg=getNum("bg");
-  const s=JSON.parse(localStorage.getItem("settings")||"{}");
-  if(!carbs||!bg||!s.cr||!s.target||!s.isf){alert("Hiányzó adat");return;}
-  const meal=carbs/s.cr;
-  const corr=Math.max(0,(bg-s.target)/s.isf);
-  lastBolus=meal+corr;
-  result.innerHTML=`<b>${lastBolus.toFixed(2)} E</b>`;
-  injectBtn.style.display=cancelBtn.style.display="block";
-}
-
-function inject(){
-  alert("Beadás rögzítve");
-  cancel();
-}
-
-function cancel(){
-  result.innerHTML="";
-  injectBtn.style.display=cancelBtn.style.display="none";
-}
-
-document.querySelectorAll(".tab").forEach(tab=>{
-  tab.onclick=()=>{
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
-    tab.classList.add("active");
-    document.getElementById(tab.dataset.tab).classList.add("active");
-  };
-});
-
-window.onload=()=>{
-  loadSettings();
-  $("splash").addEventListener("animationend",()=>{
-    $("splash").style.display="none";
-    document.querySelector("main").style.display="block";
-    $("tabBar").style.display="flex";
-  });
-};
-
-/* SERVICE WORKER */
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js");
-  });
-}
-</script>
+<script src="/bolus-pwa/js/storage.js"></script>
+<script src="/bolus-pwa/js/calc.js"></script>
+<script src="/bolus-pwa/js/ui.js"></script>
+<script src="/bolus-pwa/js/app.js"></script>
 
 </body>
 </html>
