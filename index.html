@@ -1,71 +1,30 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>Bolus varázsló</title>
 
-<!-- Manifest és ikonok helyes útvonallal -->
-<link rel="manifest" href="/bolus-pwa/manifest.json" />
-<meta name="theme-color" content="#1976d2" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<link rel="apple-touch-icon" href="/bolus-pwa/icon-192.png" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<link rel="manifest" href="/bolus-pwa/manifest.json">
+<meta name="theme-color" content="#1976d2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="/bolus-pwa/icon-192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-<!-- Inline CSS -->
 <style>
-  html, body {
-    margin: 0;
-    font-family: -apple-system, Arial, sans-serif;
-  }
-  body.dark {
-    background: #121212;
-    color: #eee;
-  }
-  .box {
-    background: #fff;
-    padding: 16px;
-    margin: 16px;
-    border-radius: 12px;
-  }
-  body.dark .box {
-    background: #1e1e1e;
-  }
-  button {
-    padding: 12px;
-    width: 100%;
-    margin-top: 8px;
-    border-radius: 10px;
-    border: none;
-    background: #1976d2;
-    color: #fff;
-  }
-  button.secondary {
-    background: #ccc;
-    color: #000;
-  }
-  button.danger {
-    background: #d32f2f;
-  }
-  #tabBar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    display: flex;
-    border-top: 1px solid #ccc;
-    background: #fff;
-  }
-  .tab {
-    flex: 1;
-    text-align: center;
-    line-height: 60px;
-  }
-  .tab.active {
-    color: #1976d2;
-    font-weight: bold;
-  }
+html,body{margin:0;font-family:-apple-system,Arial,sans-serif}
+body.dark{background:#121212;color:#eee}
+.box{background:#fff;padding:16px;margin:16px;border-radius:12px}
+body.dark .box{background:#1e1e1e}
+button{padding:12px;width:100%;margin-top:8px;border-radius:10px;border:none;background:#1976d2;color:#fff;cursor:pointer;}
+button.secondary{background:#ccc;color:#000}
+button.danger{background:#d32f2f}
+#tabBar{position:fixed;bottom:0;left:0;right:0;height:60px;display:flex;border-top:1px solid #ccc;background:#fff}
+.tab{flex:1;text-align:center;line-height:60px;cursor:pointer;}
+.tab.active{color:#1976d2;font-weight:bold}
+input{width:calc(50% - 12px);padding:8px;margin:8px 6px 0 0;border:1px solid #ccc;border-radius:6px;font-size:16px;}
+body.dark input{background:#2a2a2a;color:#eee;border-color:#555;}
+label{display:flex;align-items:center;gap:6px;margin-top:12px;font-size:16px;}
 </style>
 
 </head>
@@ -78,25 +37,25 @@
 <main style="display:none">
   <section id="home" class="box">
     <h3>Számítás</h3>
-    <input id="carbs" placeholder="Szénhidrát (g)" type="number" />
-    <input id="bg" placeholder="Vércukor" type="number" step="0.1" />
+    <input id="carbs" placeholder="Szénhidrát (g)" type="number" min="0">
+    <input id="bg" placeholder="Vércukor (mmol/L)" type="number" step="0.1" min="0">
     <button onclick="calculate()">Számolás</button>
-    <div id="result"></div>
-    <button id="injectBtn" style="display:none" onclick="inject()">Beadás</button>
-    <button id="cancelBtn" class="secondary" style="display:none" onclick="cancel()">Mégse</button>
+    <div id="result" style="margin-top:12px;"></div>
+    <button id="injectBtn" class="secondary" style="display:none;margin-top:8px;" onclick="inject()">Beadás</button>
+    <button id="cancelBtn" class="secondary" style="display:none;margin-top:8px;" onclick="cancel()">Mégse</button>
   </section>
 
   <section id="log" class="box" style="display:none">
-    <h3>Előzmények</h3>
+    <h3>Előzmények (utolsó 10)</h3>
     <div id="history"></div>
   </section>
 
   <section id="settings" class="box" style="display:none">
     <h3>Beállítások</h3>
-    <input id="cr" placeholder="CH / E" type="number" />
-    <input id="target" placeholder="Cél vércukor" type="number" step="0.1" />
-    <input id="isf" placeholder="Érzékenység" type="number" step="0.1" />
-    <label><input type="checkbox" id="darkToggle" /> Sötét mód</label>
+    <input id="cr" placeholder="CH / E" type="number" step="0.1" min="0">
+    <input id="target" placeholder="Cél vércukor (mmol/L)" type="number" step="0.1" min="0">
+    <input id="isf" placeholder="Inzulin érzékenység (mmol/L/E)" type="number" step="0.1" min="0">
+    <label><input type="checkbox" id="darkToggle"> Sötét mód</label>
     <button onclick="saveSettings()">Mentés</button>
     <button class="danger" onclick="resetAll()">MINDEN TÖRLÉSE</button>
   </section>
@@ -108,11 +67,10 @@
   <div class="tab" data-tab="settings">Beállítások</div>
 </div>
 
-<!-- JS fájlok helyes elérési útvonala a GitHub Pages repo névvel -->
-<script src="/bolus-pwa/js/storage.js"></script>
-<script src="/bolus-pwa/js/calc.js"></script>
-<script src="/bolus-pwa/js/ui.js"></script>
-<script src="/bolus-pwa/js/app.js"></script>
+<script src="storage.js"></script>
+<script src="calc.js"></script>
+<script src="ui.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
