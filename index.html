@@ -294,20 +294,33 @@ h.push({units,carbs,bg,time:Date.now()});
 localStorage.setItem("boluses",JSON.stringify(h));
 }
 
-  function resetAll(){
+function resetAll(){
 if(!confirm("Biztosan törölsz minden adatot?")) return;
 localStorage.removeItem("boluses");
 localStorage.removeItem("settings");
 location.reload();
 }
-  
-/* IOB – FIX: NEM TÖRÖL HISTORY-T */
+
+/* IOB – görbe alapú */
+function iobTriangular(units, startTime, duration) {
+    const now = Date.now();
+    const delta = (now - startTime) / 60000; // perc
+    if(delta < 0 || delta >= duration) return 0;
+
+    const peakTime = duration / 2;
+    if(delta <= peakTime){
+        return units * (delta / peakTime) * 0.7;
+    } else {
+        return units * (1 - 0.7*((delta - peakTime)/peakTime));
+    }
+}
+
 function calcIOB() {
     const now = Date.now();
     let total = 0;
     let remaining = 0;
     getBolusHistory().forEach(b => {
-        const iob = iobTriangular(b.units, b.time, INSULIN_DURATION / 60000); // duration percben
+        const iob = iobTriangular(b.units, b.time, INSULIN_DURATION / 60000);
         total += iob;
         const rem = b.time + INSULIN_DURATION - now;
         if(rem > remaining) remaining = rem;
@@ -315,23 +328,7 @@ function calcIOB() {
     return { total, remaining };
 }
 
-/* CALC */
-  function iobTriangular(units, startTime, duration) {
-    const now = Date.now();
-    const delta = (now - startTime) / 60000; // percben
-    if(delta < 0 || delta >= duration) return 0;
-
-    // Triangular shape: maximum effect 50% idején
-    const peakTime = duration / 2;
-    if(delta <= peakTime){
-        // növekvő rész
-        return units * (delta / peakTime) * 0.7; // max 70% a csúcson
-    } else {
-        // csökkenő rész
-        return units * (1 - 0.7*( (delta - peakTime)/peakTime )); 
-    }
-}
-
+/* CALCULATION */
 function calculate(){
     const carbsVal = parseFloat(carbs.value);
     const bgVal = parseFloat(bg.value);
@@ -349,7 +346,7 @@ function calculate(){
         ? (bgVal - s.target) / s.isf
         : 0;
 
-    // IOB (active insulin from previous boluses, görbe alapú)
+    // IOB
     const iobVal = calcIOB().total;
 
     // Subtract IOB from correction ONLY
@@ -362,34 +359,12 @@ function calculate(){
     injectBtn.style.display = cancelBtn.style.display = "block";
 }
 
-
-    // Meal bolus
-    const mealBolus = carbsVal / s.cr;
-
-    // Correction bolus BEFORE IOB
-    const rawCorrBolus = bgVal >= s.target
-        ? (bgVal - s.target) / s.isf
-        : 0;
-
-    // IOB (active insulin from previous boluses)
-    const iobVal = calcIOB().total;
-
-    // Subtract IOB from correction ONLY
-    const corrBolus = Math.max(0, rawCorrBolus - iobVal);
-
-    // Total recommended
-    lastBolus = mealBolus + corrBolus;
-
-    result.innerHTML = `<strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
-    injectBtn.style.display = cancelBtn.style.display = "block";
-}
-  
 function inject(){
     saveBolus(lastBolus, parseFloat(carbs.value), parseFloat(bg.value));
     cancel();
     updateIOB();
-    renderHistory();      // ez frissíti az utolsó 10 előzményt
-    renderFullHistory();  // ez frissíti az 1 hónapos előzményt
+    renderHistory();
+    renderFullHistory();
 }
 
 function cancel(){
@@ -415,17 +390,19 @@ return `
 }
 
 function renderHistory(){
-    const h = getBolusHistory().slice(-10).reverse(); // utolsó 10 elem
-    const historyDiv = document.getElementById("history"); // biztos ID
+    const h = getBolusHistory().slice(-10).reverse();
+    const historyDiv = document.getElementById("history");
     historyDiv.innerHTML = h.length
         ? h.map(historyRow).join("")
         : "<span class='small'>Nincs adat</span>";
 }
 
-  function renderFullHistory(){
-const monthAgo=Date.now()-30*24*60*60*1000;
-const h=getBolusHistory().filter(b=>b.time>=monthAgo).reverse();
-fullHistory.innerHTML=h.length?h.map(historyRow).join(""):"<span class='small'>Nincs adat</span>";
+function renderFullHistory(){
+    const monthAgo = Date.now() - 30*24*60*60*1000;
+    const h = getBolusHistory().filter(b=>b.time >= monthAgo).reverse();
+    fullHistory.innerHTML = h.length
+        ? h.map(historyRow).join("")
+        : "<span class='small'>Nincs adat</span>";
 }
 
 /* TABS */
@@ -444,15 +421,15 @@ if(t.dataset.tab==="log")renderFullHistory();
 window.onload = () => {
     loadSettings();
     updateIOB();
-    renderHistory();       // utolsó 10
-    renderFullHistory();   // 1 hónap
+    renderHistory();
+    renderFullHistory();
     splash.addEventListener("animationend", () => {
         splash.style.display = "none";
         document.querySelector("main").style.display = "block";
         tabBar.style.display = "flex";
     });
 };
-  document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
     renderHistory();
     renderFullHistory();
 });
@@ -460,10 +437,3 @@ window.onload = () => {
 
 </body>
 </html>
-
-
-
-
-
-
-
