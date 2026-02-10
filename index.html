@@ -271,14 +271,15 @@ document.querySelectorAll(".tab").forEach(t=>{
  };
 });
 
-window.onload=()=>{
- document.getElementById("splash").addEventListener("animationend",()=>{
-  splash.style.display="none";
-  main.style.display="block";
-  tabBar.style.display="flex";
- });
- renderHistory();
- renderFullHistory();
+window.onload = () => {
+  renderHistory();
+  renderFullHistory();
+
+  setTimeout(() => {
+    splash.style.display = "none";
+    document.querySelector("main").style.display = "block";
+    tabBar.style.display = "flex";
+  }, 3000); // splash anim + delay biztosan lejár
 };
 
 if("serviceWorker" in navigator){
@@ -288,3 +289,4 @@ if("serviceWorker" in navigator){
 
 </body>
 </html>
+
