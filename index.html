@@ -316,6 +316,22 @@ function calcIOB() {
 }
 
 /* CALC */
+  function iobTriangular(units, startTime, duration) {
+    const now = Date.now();
+    const delta = (now - startTime) / 60000; // percben
+    if(delta < 0 || delta >= duration) return 0;
+
+    // Triangular shape: maximum effect 50% idején
+    const peakTime = duration / 2;
+    if(delta <= peakTime){
+        // növekvő rész
+        return units * (delta / peakTime) * 0.7; // max 70% a csúcson
+    } else {
+        // csökkenő rész
+        return units * (1 - 0.7*( (delta - peakTime)/peakTime )); 
+    }
+}
+
 function calculate(){
   const iobVal = calcIOB().total;
 const corrBolus = Math.max(0, rawCorrBolus - iobVal);
@@ -425,6 +441,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
