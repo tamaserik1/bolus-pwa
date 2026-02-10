@@ -353,6 +353,19 @@ function updateIOB(){
 }
 setInterval(updateIOB,5000);
 
+    function insulinActionTriangular(t, D){
+    const Tpeak = D * 0.4;
+
+    if(t <= 0 || t >= D) return 0;
+
+    if(t <= Tpeak){
+        return t / Tpeak;                 // felfutás
+    } else {
+        return (D - t) / (D - Tpeak);     // lefutás
+    }
+}
+
+    
 /* CALCULATION */
 function calculate(){
     const carbsVal = parseFloat(carbs.value);
@@ -449,6 +462,38 @@ function insulinEffectLinear(elapsedMin, durationMin){
     return 1 - (elapsedMin / durationMin);
 }
 
+    function calculateBGCurve(bgStart){
+    const s = JSON.parse(localStorage.getItem("settings") || "{}");
+    if(!s.isf || !s.target) return [];
+
+    const boluses = getBolusHistory();
+    const D = INSULIN_DURATION / 60000;
+    const step = 5;
+
+    // teljes várható csökkenés mmol/L-ben
+    let totalInsulin = 0;
+    boluses.forEach(b => totalInsulin += b.units);
+    const totalDrop = totalInsulin * s.isf;
+
+    const curve = [];
+
+    for(let t=0; t<=D; t+=step){
+        let effectSum = 0;
+
+        boluses.forEach(b=>{
+            effectSum += b.units * insulinActionTriangular(t, D);
+        });
+
+        const fraction = effectSum / totalInsulin || 0;
+        const bg = bgStart - fraction * totalDrop;
+
+        curve.push({ t, bg });
+    }
+
+    return curve;
+}
+
+    
 function renderBGPrediction(bgNow){
     const chart = document.getElementById("bgPredictionChart");
     if(!chart) return;
@@ -510,6 +555,7 @@ function renderBGPrediction(bgNow){
 
 </body>
 </html>
+
 
 
 
