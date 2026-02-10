@@ -294,6 +294,13 @@ h.push({units,carbs,bg,time:Date.now()});
 localStorage.setItem("boluses",JSON.stringify(h));
 }
 
+  function resetAll(){
+if(!confirm("Biztosan törölsz minden adatot?")) return;
+localStorage.removeItem("boluses");
+localStorage.removeItem("settings");
+location.reload();
+}
+  
 /* IOB – FIX: NEM TÖRÖL HISTORY-T */
 function calcIOB(){
 const now=Date.now();
@@ -391,4 +398,5 @@ tabBar.style.display="flex";
 
 </body>
 </html>
+
 
