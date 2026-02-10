@@ -198,6 +198,8 @@ Betöltés…
 <h3>Aktív inzulin</h3>
 <div id="iob"></div>
 <div id="iobChart" style="margin-top:10px; height:60px;"></div>
+<div id="bgPredictionChart" style="margin-top:14px;height:80px;"></div>
+
 </div>
 
 <div class="box">
@@ -369,6 +371,7 @@ function calculate(){
 
     result.innerHTML = `<strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
     injectBtn.style.display = cancelBtn.style.display = "block";
+    renderBGPrediction(bgVal);
 }
 
 function inject(){
@@ -439,7 +442,48 @@ document.addEventListener("DOMContentLoaded", () => {
     renderHistory();
     renderFullHistory();
 });
+    /* ===== BG PREDIKCIÓS GRAFIKON ===== */
+
+function insulinEffectLinear(elapsedMin, durationMin){
+    if(elapsedMin < 0 || elapsedMin > durationMin) return 0;
+    return 1 - (elapsedMin / durationMin);
+}
+
+function renderBGPrediction(bgNow){
+    const chart = document.getElementById("bgPredictionChart");
+    if(!chart) return;
+
+    const s = JSON.parse(localStorage.getItem("settings") || "{}");
+    if(!s.isf) return;
+
+    const history = getBolusHistory();
+    const durationMin = INSULIN_DURATION / 60000;
+    const points = [];
+
+    for(let t=0; t<=durationMin; t+=5){
+        let totalEffect = 0;
+
+        history.forEach(b=>{
+            const elapsed = (Date.now() - b.time)/60000 + t;
+            totalEffect += b.units * insulinEffectLinear(elapsed, durationMin);
+        });
+
+        const predictedBG = bgNow - totalEffect * s.isf;
+        points.push(predictedBG);
+    }
+
+    const min = Math.min(...points);
+    const max = Math.max(...points);
+    const range = Math.max(1, max - min);
+
+    chart.innerHTML = points.map(v=>{
+        const h = ((v - min) / range) * 70 + 5;
+        return `<div style="display:inline-block;width:3px;height:${h}px;background:#355B48;margin-right:1px"></div>`;
+    }).join("");
+}
+
 </script>
 
 </body>
 </html>
+
