@@ -197,6 +197,7 @@ Betöltés…
 <div class="box">
 <h3>Aktív inzulin</h3>
 <div id="iob"></div>
+<div id="iobChart" style="margin-top:10px; height:60px;"></div>
 </div>
 
 <div class="box">
@@ -301,12 +302,11 @@ localStorage.removeItem("settings");
 location.reload();
 }
 
-/* IOB – görbe alapú */
+/* IOB – görbe alapú és vizualizáció */
 function iobTriangular(units, startTime, duration) {
     const now = Date.now();
-    const delta = (now - startTime) / 60000; // perc
+    const delta = (now - startTime) / 60000;
     if(delta < 0 || delta >= duration) return 0;
-
     const peakTime = duration / 2;
     if(delta <= peakTime){
         return units * (delta / peakTime) * 0.7;
@@ -315,18 +315,46 @@ function iobTriangular(units, startTime, duration) {
     }
 }
 
-function calcIOB() {
+function calcIOB(detailed=false){
     const now = Date.now();
     let total = 0;
     let remaining = 0;
-    getBolusHistory().forEach(b => {
-        const iob = iobTriangular(b.units, b.time, INSULIN_DURATION / 60000);
+    const points = [];
+
+    getBolusHistory().forEach(b=>{
+        const iob = iobTriangular(b.units, b.time, INSULIN_DURATION/60000);
         total += iob;
         const rem = b.time + INSULIN_DURATION - now;
         if(rem > remaining) remaining = rem;
+
+        if(detailed){
+            const durationMin = INSULIN_DURATION / 60000;
+            for(let t=0; t<=durationMin; t+=5){
+                points.push({
+                    time: b.time + t*60000,
+                    value: iobTriangular(b.units, b.time, durationMin)
+                });
+            }
+        }
     });
-    return { total, remaining };
+
+    return detailed ? { total, remaining, points } : { total, remaining };
 }
+
+function updateIOB(){
+    const { total, remaining, points } = calcIOB(true);
+    iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br>
+    <span class="small">Hátralévő idő: ${Math.ceil(remaining/60000)} perc</span>`;
+
+    const chartDiv = document.getElementById("iobChart");
+    if(!points || points.length===0){ chartDiv.innerHTML=""; return; }
+
+    chartDiv.innerHTML = points.map(p=>{
+        const pct = Math.min(60, p.value*6);
+        return `<div style="display:inline-block;width:2px;height:${pct}px;background:#3B4A5A;margin-right:1px;"></div>`;
+    }).join("");
+}
+setInterval(updateIOB,5000);
 
 /* CALCULATION */
 function calculate(){
@@ -338,21 +366,10 @@ function calculate(){
         return;
     }
 
-    // Meal bolus
     const mealBolus = carbsVal / s.cr;
-
-    // Correction bolus BEFORE IOB
-    const rawCorrBolus = bgVal >= s.target
-        ? (bgVal - s.target) / s.isf
-        : 0;
-
-    // IOB
+    const rawCorrBolus = bgVal >= s.target ? (bgVal - s.target)/s.isf : 0;
     const iobVal = calcIOB().total;
-
-    // Subtract IOB from correction ONLY
     const corrBolus = Math.max(0, rawCorrBolus - iobVal);
-
-    // Total recommended
     lastBolus = mealBolus + corrBolus;
 
     result.innerHTML = `<strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
@@ -373,12 +390,6 @@ injectBtn.style.display=cancelBtn.style.display="none";
 }
 
 /* UI */
-function updateIOB(){
-const {total,remaining}=calcIOB();
-iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br>
-<span class="small">Hátralévő idő: ${Math.ceil(remaining/60000)} perc</span>`;
-}
-
 function historyRow(b){
 return `
 <div class="history-item">
