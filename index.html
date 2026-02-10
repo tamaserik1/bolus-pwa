@@ -302,37 +302,53 @@ location.reload();
 }
   
 /* IOB – FIX: NEM TÖRÖL HISTORY-T */
-function calcIOB(){
-const now=Date.now();
-let total=0,remaining=0;
-getBolusHistory().forEach(b=>{
-const e=now-b.time;
-if(e<INSULIN_DURATION){
-const r=1-e/INSULIN_DURATION;
-total+=b.units*r;
-remaining=Math.max(remaining,INSULIN_DURATION-e);
-}
-});
-return {total,remaining};
+function calcIOB() {
+    const now = Date.now();
+    let total = 0;
+    let remaining = 0;
+    getBolusHistory().forEach(b => {
+        const iob = iobTriangular(b.units, b.time, INSULIN_DURATION / 60000); // duration percben
+        total += iob;
+        const rem = b.time + INSULIN_DURATION - now;
+        if(rem > remaining) remaining = rem;
+    });
+    return { total, remaining };
 }
 
 /* CALC */
 function calculate(){
-const carbsVal=parseFloat(carbs.value);
-const bgVal=parseFloat(bg.value);
-const s=JSON.parse(localStorage.getItem("settings")||"{}");
-if([carbsVal,bgVal,s.cr,s.target,s.isf].some(v=>isNaN(v))){
-alert("Hiányzó adat!");
-return;
-}
-const {total:iob}=calcIOB();
-const meal=carbsVal/s.cr;
-const corr=bgVal>=HYPO_LIMIT?Math.max(0,(bgVal-s.target)/s.isf-iob):0;
-lastBolus=meal+corr;
-result.innerHTML=`<strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
-injectBtn.style.display=cancelBtn.style.display="block";
-}
+  const iobVal = calcIOB().total;
+const corrBolus = Math.max(0, rawCorrBolus - iobVal);
+lastBolus = mealBolus + corrBolus; 
+  const carbsVal = parseFloat(carbs.value);
+    const bgVal = parseFloat(bg.value);
+    const s = JSON.parse(localStorage.getItem("settings") || "{}");
+    if([carbsVal,bgVal,s.cr,s.target,s.isf].some(v=>isNaN(v))){
+        alert("Hiányzó adat!");
+        return;
+    }
 
+    // Meal bolus
+    const mealBolus = carbsVal / s.cr;
+
+    // Correction bolus BEFORE IOB
+    const rawCorrBolus = bgVal >= s.target
+        ? (bgVal - s.target) / s.isf
+        : 0;
+
+    // IOB (active insulin from previous boluses)
+    const iobVal = calcIOB().total;
+
+    // Subtract IOB from correction ONLY
+    const corrBolus = Math.max(0, rawCorrBolus - iobVal);
+
+    // Total recommended
+    lastBolus = mealBolus + corrBolus;
+
+    result.innerHTML = `<strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
+    injectBtn.style.display = cancelBtn.style.display = "block";
+}
+  
 function inject(){
     saveBolus(lastBolus, parseFloat(carbs.value), parseFloat(bg.value));
     cancel();
@@ -409,6 +425,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
