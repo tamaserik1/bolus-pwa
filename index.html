@@ -93,6 +93,7 @@ border-radius:15px;
 background:var(--soft);
 }
 
+/* ===== MINIMALISTA GOMBOK – FIX ===== */
 button{
 margin-top:18px;
 width:100%;
@@ -197,9 +198,6 @@ Betöltés…
 <h3>Aktív inzulin</h3>
 <div id="iob"></div>
 <div id="iobChart" style="margin-top:10px; height:60px;"></div>
-
-<!-- ÚJ GRAFIKON – CSAK HOZZÁADVA -->
-<div id="bgPredictionChart" style="margin-top:12px;height:80px;"></div>
 </div>
 
 <div class="box">
@@ -239,50 +237,208 @@ A számítások tájékoztató jellegűek.
 </main>
 
 <div id="tabBar" style="display:none">
-<div class="tab active" data-tab="home">Kezdőoldal</div>
-<div class="tab" data-tab="log">Napló</div>
-<div class="tab" data-tab="settings">Beállítások</div>
+
+<div class="tab active" data-tab="home">
+<svg viewBox="0 0 24 24">
+<path d="M4 12L12 4L20 12"/>
+<path d="M9 21V12H15V21"/>
+</svg>
+Kezdőoldal
+</div>
+
+<div class="tab" data-tab="log">
+<svg viewBox="0 0 24 24">
+<path d="M5 6H19"/>
+<path d="M5 12H19"/>
+<path d="M5 18H19"/>
+</svg>
+Napló
+</div>
+
+<div class="tab" data-tab="settings">
+<svg viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="3"/>
+<path d="M19.4 15a1.6 1.6 0 0 0 .33 1.82"/>
+<path d="M4.3 9a1.6 1.6 0 0 0-.33-1.82"/>
+</svg>
+Beállítások
+</div>
+
 </div>
 
 <script>
-/* ===== BG PREDIKCIÓ – TELJESEN FÜGGETLEN ===== */
+const $=id=>document.getElementById(id);
+let lastBolus=null;
+let INSULIN_DURATION=180*60*1000;
+const HYPO_LIMIT=4;
 
-function insulinEffectLinear(t, d){
-    if(t < 0 || t > d) return 0;
-    return 1 - (t / d);
+/* SETTINGS */
+function saveSettings(){
+const s={cr:+cr.value,target:+target.value,isf:+isf.value,duration:+duration.value};
+localStorage.setItem("settings",JSON.stringify(s));
+INSULIN_DURATION=s.duration*60000;
+alert("Beállítások mentve");
+}
+function loadSettings(){
+const s=JSON.parse(localStorage.getItem("settings")||"{}");
+if(s.cr)cr.value=s.cr;
+if(s.target)target.value=s.target;
+if(s.isf)isf.value=s.isf;
+if(s.duration){duration.value=s.duration;INSULIN_DURATION=s.duration*60000;}
 }
 
-function renderBGPrediction(bgNow){
-    const chart = document.getElementById("bgPredictionChart");
-    if(!chart) return;
+/* STORAGE */
+function getBolusHistory(){return JSON.parse(localStorage.getItem("boluses")||"[]");}
+function saveBolus(units,carbs,bg){
+const h=getBolusHistory();
+h.push({units,carbs,bg,time:Date.now()});
+localStorage.setItem("boluses",JSON.stringify(h));
+}
 
-    const s = JSON.parse(localStorage.getItem("settings") || "{}");
-    if(!s.isf) return;
+function resetAll(){
+if(!confirm("Biztosan törölsz minden adatot?")) return;
+localStorage.removeItem("boluses");
+localStorage.removeItem("settings");
+location.reload();
+}
 
-    const durationMin = INSULIN_DURATION / 60000;
-    const history = getBolusHistory();
+/* IOB – lineáris csökkenő és vizualizáció */
+function iobLinear(units, startTime, duration){
+    const now = Date.now();
+    const elapsed = (now - startTime)/60000; // perc
+    if(elapsed < 0 || elapsed >= duration) return 0;
+    return units * (1 - elapsed/duration);
+}
+
+function calcIOB(detailed=false){
+    const now = Date.now();
+    let total = 0;
+    let remaining = 0;
     const points = [];
 
-    for(let t=0; t<=durationMin; t+=5){
-        let insulinEffect = 0;
+    getBolusHistory().forEach(b=>{
+        const iob = iobLinear(b.units, b.time, INSULIN_DURATION/60000);
+        total += iob;
+        const rem = b.time + INSULIN_DURATION - now;
+        if(rem > remaining) remaining = rem;
 
-        history.forEach(b=>{
-            const elapsed = (Date.now() - b.time)/60000 + t;
-            insulinEffect += b.units * insulinEffectLinear(elapsed, durationMin);
-        });
+        if(detailed){
+            const durationMin = INSULIN_DURATION/60000;
+            for(let t=0; t<=durationMin; t+=5){
+                points.push({
+                    time: b.time + t*60000,
+                    value: iobLinear(b.units, b.time, durationMin)
+                });
+            }
+        }
+    });
 
-        points.push(bgNow - insulinEffect * s.isf);
-    }
+    return detailed ? { total, remaining, points } : { total, remaining };
+}
 
-    const min = Math.min(...points);
-    const max = Math.max(...points);
-    const range = Math.max(1, max - min);
+function updateIOB(){
+    const { total, remaining, points } = calcIOB(true);
+    iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br>
+    <span class="small">Hátralévő idő: ${Math.ceil(remaining/60000)} perc</span>`;
 
-    chart.innerHTML = points.map(v=>{
-        const h = ((v - min) / range) * 70 + 5;
-        return `<div style="display:inline-block;width:3px;height:${h}px;background:#355B48;margin-right:1px"></div>`;
+    const chartDiv = document.getElementById("iobChart");
+    if(!points || points.length===0){ chartDiv.innerHTML=""; return; }
+
+    chartDiv.innerHTML = points.map(p=>{
+        const pct = Math.min(60, p.value*6);
+        return `<div style="display:inline-block;width:2px;height:${pct}px;background:#3B4A5A;margin-right:1px;"></div>`;
     }).join("");
 }
+setInterval(updateIOB,5000);
+
+/* CALCULATION */
+function calculate(){
+    const carbsVal = parseFloat(carbs.value);
+    const bgVal = parseFloat(bg.value);
+    const s = JSON.parse(localStorage.getItem("settings") || "{}");
+    if([carbsVal,bgVal,s.cr,s.target,s.isf].some(v=>isNaN(v))){
+        alert("Hiányzó adat!");
+        return;
+    }
+
+    const mealBolus = carbsVal / s.cr;
+    const rawCorrBolus = bgVal >= s.target ? (bgVal - s.target)/s.isf : 0;
+    const iobVal = calcIOB().total;
+    const corrBolus = Math.max(0, rawCorrBolus - iobVal);
+    lastBolus = mealBolus + corrBolus;
+
+    result.innerHTML = `<strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
+    injectBtn.style.display = cancelBtn.style.display = "block";
+}
+
+function inject(){
+    saveBolus(lastBolus, parseFloat(carbs.value), parseFloat(bg.value));
+    cancel();
+    updateIOB();
+    renderHistory();
+    renderFullHistory();
+}
+
+function cancel(){
+result.innerHTML="";
+injectBtn.style.display=cancelBtn.style.display="none";
+}
+
+/* UI */
+function historyRow(b){
+return `
+<div class="history-item">
+<span class="pill insulin">${b.units.toFixed(2)} E</span>
+<span class="pill carb">${b.carbs} g CH</span>
+<span class="pill bg">${b.bg} mmol/L</span><br>
+<span class="small">${new Date(b.time).toLocaleString()}</span>
+</div>`;
+}
+
+function renderHistory(){
+    const h = getBolusHistory().slice(-10).reverse();
+    const historyDiv = document.getElementById("history");
+    historyDiv.innerHTML = h.length
+        ? h.map(historyRow).join("")
+        : "<span class='small'>Nincs adat</span>";
+}
+
+function renderFullHistory(){
+    const monthAgo = Date.now() - 30*24*60*60*1000;
+    const h = getBolusHistory().filter(b=>b.time >= monthAgo).reverse();
+    fullHistory.innerHTML = h.length
+        ? h.map(historyRow).join("")
+        : "<span class='small'>Nincs adat</span>";
+}
+
+/* TABS */
+document.querySelectorAll(".tab").forEach(t=>{
+t.onclick=()=>{
+document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+t.classList.add("active");
+document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+$(t.dataset.tab).classList.add("active");
+if(t.dataset.tab==="home")renderHistory();
+if(t.dataset.tab==="log")renderFullHistory();
+};
+});
+
+/* INIT */
+window.onload = () => {
+    loadSettings();
+    updateIOB();
+    renderHistory();
+    renderFullHistory();
+    splash.addEventListener("animationend", () => {
+        splash.style.display = "none";
+        document.querySelector("main").style.display = "block";
+        tabBar.style.display = "flex";
+    });
+};
+document.addEventListener("DOMContentLoaded", () => {
+    renderHistory();
+    renderFullHistory();
+});
 </script>
 
 </body>
