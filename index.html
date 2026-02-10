@@ -13,122 +13,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <style>
-/* ===== PALETTE ===== */
 :root{
-  --bg:#F4F4F3;
-  --card:#FFFFFF;
-  --text:#2B2B2B;
-  --muted:#6F6F6F;
-  --soft:#ECECEC;
-
-  --pill-ins-bg:rgba(120,140,160,.18);
-  --pill-ins-tx:#3B4A5A;
-  --pill-carb-bg:rgba(120,160,140,.20);
-  --pill-carb-tx:#355B48;
-  --pill-bg-bg:rgba(160,160,160,.20);
-  --pill-bg-tx:#444;
+  --bg:#F4F4F3;--card:#FFF;--text:#2B2B2B;--muted:#6F6F6F;--soft:#ECECEC;
+  --pill-ins-bg:rgba(120,140,160,.18);--pill-ins-tx:#3B4A5A;
+  --pill-carb-bg:rgba(120,160,140,.20);--pill-carb-tx:#355B48;
+  --pill-bg-bg:rgba(160,160,160,.20);--pill-bg-tx:#444;
 }
-
-@media (prefers-color-scheme: dark){
+@media(prefers-color-scheme:dark){
 :root{
-  --bg:#1F2123;
-  --card:#2A2C2F;
-  --text:#E6E6E6;
-  --muted:#A0A0A0;
-  --soft:#3A3C40;
-
-  --pill-ins-bg:rgba(120,140,160,.35);
-  --pill-ins-tx:#DCE6F0;
-  --pill-carb-bg:rgba(120,160,140,.35);
-  --pill-carb-tx:#DDEFE5;
-  --pill-bg-bg:rgba(180,180,180,.25);
-  --pill-bg-tx:#EEE;
-}
-}
-
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
-
-#splash{
-  position:fixed;inset:0;
-  background:#1976d2;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  color:white;
-  z-index:9999;
-}
-
-main{display:none;padding:16px;padding-bottom:90px}
+  --bg:#1F2123;--card:#2A2C2F;--text:#E6E6E6;--muted:#A0A0A0;--soft:#3A3C40;
+  --pill-ins-bg:rgba(120,140,160,.35);--pill-ins-tx:#DCE6F0;
+  --pill-carb-bg:rgba(120,160,140,.35);--pill-carb-tx:#DDEFE5;
+  --pill-bg-bg:rgba(180,180,180,.25);--pill-bg-tx:#EEE;
+}}
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui;background:var(--bg);color:var(--text)}
+#splash{position:fixed;inset:0;background:#1976d2;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9}
+main{display:none;padding:16px 16px 90px}
 section{display:none}
 section.active{display:block}
-
-.box{
-  background:var(--card);
-  border-radius:22px;
-  padding:18px;
-  margin-bottom:18px;
-  box-shadow:0 8px 24px rgba(0,0,0,.08);
-}
-
-h3{font-size:17px;margin-bottom:10px}
-label{display:block;margin-top:12px;color:var(--muted)}
-input{
-  width:100%;
-  margin-top:6px;
-  padding:14px;
-  border-radius:14px;
-  border:none;
-  background:var(--soft);
-  color:var(--text);
-}
-
-button{
-  margin-top:14px;
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:14px;
-  background:#DADADA;
-  color:var(--text);
-}
-
-.history-item{padding:10px 0}
-.pill{
-  display:inline-block;
-  padding:4px 12px;
-  border-radius:999px;
-  font-size:13px;
-  font-weight:600;
-  margin-right:6px;
-}
+.box{background:var(--card);border-radius:22px;padding:18px;margin-bottom:18px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+label{margin-top:12px;display:block;color:var(--muted)}
+input,button{width:100%;margin-top:6px;padding:14px;border-radius:14px;border:none}
+input{background:var(--soft);color:var(--text)}
+button{background:#DADADA}
+.pill{display:inline-block;padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600;margin-right:6px}
 .insulin{background:var(--pill-ins-bg);color:var(--pill-ins-tx)}
 .carb{background:var(--pill-carb-bg);color:var(--pill-carb-tx)}
 .bg{background:var(--pill-bg-bg);color:var(--pill-bg-tx)}
 .small{font-size:13px;color:var(--muted)}
-
-#tabBar{
-  position:fixed;bottom:0;left:0;right:0;
-  height:75px;
-  background:var(--card);
-  display:flex;
-  border-top:1px solid #ccc;
-}
-.tab{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  font-size:13px;
-  color:var(--muted);
-}
+#tabBar{position:fixed;bottom:0;left:0;right:0;height:75px;background:var(--card);display:none}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted)}
 .tab.active{color:#1976d2}
 </style>
 </head>
@@ -136,45 +51,26 @@ button{
 <body>
 
 <div id="splash">
-  <img src="icon-512.png" width="120"><br>Betöltés…
+<img src="icon-512.png" width="120"><br>Betöltés…
 </div>
 
 <main>
 <section id="home" class="active">
-
 <div class="box">
-<h3>Számítás</h3>
-<label>Szénhidrát (g)</label>
-<input id="carbs" type="number">
-<label>Aktuális vércukor (mmol/L)</label>
-<input id="bg" type="number" step="0.1">
+<label>Szénhidrát (g)</label><input id="carbs" type="number">
+<label>Aktuális vércukor</label><input id="bg" type="number" step="0.1">
 <button onclick="calculate()">Számolás</button>
 <div id="result"></div>
 <button id="injectBtn" style="display:none" onclick="inject()">Beadás</button>
 </div>
-
-<div class="box">
-<h3>Aktív inzulin</h3>
-<div id="iob"></div>
-</div>
-
-<div class="box">
-<h3>Előzmények (utolsó 10)</h3>
-<div id="history"></div>
-</div>
-
+<div class="box"><h3>Aktív inzulin</h3><div id="iob"></div></div>
+<div class="box"><h3>Előzmények (utolsó 10)</h3><div id="history"></div></div>
 </section>
 
-<section id="log">
-<div class="box">
-<h3>Előzmények (1 hónap)</h3>
-<div id="fullHistory"></div>
-</div>
-</section>
+<section id="log"><div class="box"><div id="fullHistory"></div></div></section>
 
 <section id="settings">
 <div class="box">
-<h3>Beállítások</h3>
 <label>CH arány</label><input id="cr">
 <label>Cél vércukor</label><input id="target" value="5.5">
 <label>Érzékenység</label><input id="isf">
@@ -183,7 +79,7 @@ button{
 </section>
 </main>
 
-<div id="tabBar" style="display:none">
+<div id="tabBar">
 <div class="tab active" data-tab="home">Kezdő</div>
 <div class="tab" data-tab="log">Napló</div>
 <div class="tab" data-tab="settings">Beáll.</div>
@@ -191,65 +87,37 @@ button{
 
 <script>
 const $=id=>document.getElementById(id);
+const mainEl=document.querySelector("main");
 let lastBolus=null;
-let INSULIN_DURATION=180*60*1000;
-const HYPO_LIMIT=4.0;
+const INSULIN_DURATION=180*60*1000;
 
-/* SETTINGS */
 function saveSettings(){
- localStorage.setItem("settings",JSON.stringify({
-  cr:+cr.value,target:+target.value,isf:+isf.value
- }));
+ localStorage.setItem("settings",JSON.stringify({cr:+cr.value,target:+target.value,isf:+isf.value}));
 }
 function loadSettings(){
  const s=JSON.parse(localStorage.getItem("settings")||"{}");
- if(s.cr)cr.value=s.cr;
- if(s.target)target.value=s.target;
- if(s.isf)isf.value=s.isf;
+ cr.value=s.cr||"";target.value=s.target||5.5;isf.value=s.isf||"";
 }
-
-/* STORAGE */
-function getBolusHistory(){
- return JSON.parse(localStorage.getItem("boluses")||"[]");
-}
+function getBolusHistory(){return JSON.parse(localStorage.getItem("boluses")||"[]")}
 function saveBolus(u,c,b){
- const h=getBolusHistory();
- h.push({units:u,carbs:c,bg:b,time:Date.now()});
+ const h=getBolusHistory();h.push({units:u,carbs:c,bg:b,time:Date.now()});
  localStorage.setItem("boluses",JSON.stringify(h));
 }
-
-/* IOB */
 function calcIOB(){
- const now=Date.now();
- let total=0,remaining=0;
+ const now=Date.now();let total=0;
  const valid=[];
  getBolusHistory().forEach(b=>{
   const e=now-b.time;
-  if(e<INSULIN_DURATION){
-   const r=1-e/INSULIN_DURATION;
-   total+=b.units*r;
-   remaining=Math.max(remaining,INSULIN_DURATION-e);
-   valid.push(b);
-  }
+  if(e<INSULIN_DURATION){total+=b.units*(1-e/INSULIN_DURATION);valid.push(b);}
  });
  localStorage.setItem("boluses",JSON.stringify(valid));
- return {total,remaining};
+ return total;
 }
-function updateIOB(){
- const {total,remaining}=calcIOB();
- iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br>
- <span class="small">Hátralévő idő: ${Math.ceil(remaining/60000)} perc</span>`;
-}
-
-/* CALC */
+function updateIOB(){iob.innerHTML=`<strong>${calcIOB().toFixed(2)} E</strong>`}
 function calculate(){
- const carbsV=+carbs.value,bgV=+bg.value;
- const s=JSON.parse(localStorage.getItem("settings"));
- if(!s)return alert("Hiányzó beállítás");
- const {total:iobV}=calcIOB();
- const meal=carbsV/s.cr;
- const corr=bgV>=HYPO_LIMIT?Math.max(0,(bgV-s.target)/s.isf-iobV):0;
- lastBolus=meal+corr;
+ const s=JSON.parse(localStorage.getItem("settings")||"{}");
+ if(!s.cr||!s.isf)return alert("Hiányzó beállítás");
+ lastBolus=(+carbs.value/s.cr)+Math.max(0,(+bg.value-s.target)/s.isf);
  result.innerHTML=`Javasolt: <strong>${lastBolus.toFixed(2)} E</strong>`;
  injectBtn.style.display="block";
 }
@@ -257,50 +125,28 @@ function inject(){
  saveBolus(lastBolus,+carbs.value,+bg.value);
  renderHistory();renderFullHistory();updateIOB();
 }
-
-/* HISTORY */
 function historyRow(b){
- return `<div class="history-item">
- <span class="pill insulin">${b.units.toFixed(2)} E</span>
- <span class="pill carb">${b.carbs} g</span>
- <span class="pill bg">${b.bg} mmol/L</span><br>
- <span class="small">${new Date(b.time).toLocaleString()}</span>
- </div>`;
+ return `<div><span class="pill insulin">${b.units.toFixed(2)}E</span>
+ <span class="pill carb">${b.carbs}g</span>
+ <span class="pill bg">${b.bg}</span><br>
+ <span class="small">${new Date(b.time).toLocaleString()}</span></div>`;
 }
 function renderHistory(){
- history.innerHTML=getBolusHistory().slice(-10).reverse().map(historyRow).join("")||"<span class='small'>Nincs adat</span>";
+ history.innerHTML=getBolusHistory().slice(-10).reverse().map(historyRow).join("")||"Nincs adat";
 }
 function renderFullHistory(){
- const m=Date.now()-30*24*60*60*1000;
- fullHistory.innerHTML=getBolusHistory().filter(b=>b.time>=m).reverse().map(historyRow).join("")||"<span class='small'>Nincs adat</span>";
+ fullHistory.innerHTML=getBolusHistory().reverse().map(historyRow).join("")||"Nincs adat";
 }
-
-/* NAV */
-document.querySelectorAll(".tab").forEach(t=>{
- t.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  t.classList.add("active");
-  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
-  $(t.dataset.tab).classList.add("active");
- };
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+ t.classList.add("active");
+ document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+ $(t.dataset.tab).classList.add("active");
 });
-
 window.onload=()=>{
- loadSettings();
- updateIOB();
- renderHistory();
- renderFullHistory();
- setTimeout(()=>{
-  splash.style.display="none";
-  main.style.display="block";
-  tabBar.style.display="flex";
- },1500);
+ loadSettings();updateIOB();renderHistory();renderFullHistory();
+ setTimeout(()=>{splash.style.display="none";mainEl.style.display="block";tabBar.style.display="flex"},1500);
 };
-
-if("serviceWorker"in navigator){
- navigator.serviceWorker.register("./sw.js");
-}
 </script>
-
 </body>
 </html>
