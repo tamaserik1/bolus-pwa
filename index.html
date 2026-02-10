@@ -197,7 +197,7 @@ Betöltés…
 <div class="box">
 <h3>Aktív inzulin</h3>
 <div id="iob"></div>
-<div id="iobChart" style="margin-top:10px; height:60px;"></div>
+<!-- <div id="iobChart" style="margin-top:10px; height:60px;"></div> -->
 <div id="bgPredictionChart" style="margin-top:14px;height:80px;"></div>
 
 </div>
@@ -343,13 +343,7 @@ function updateIOB(){
     iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br>
     <span class="small">Hátralévő idő: ${Math.ceil(remaining/60000)} perc</span>`;
 
-    const chartDiv = document.getElementById("iobChart");
-    if(!points || points.length===0){ chartDiv.innerHTML=""; return; }
-
-    chartDiv.innerHTML = points.map(p=>{
-        const pct = Math.min(60, p.value*6);
-        return `<div style="display:inline-block;width:2px;height:${pct}px;background:#3B4A5A;margin-right:1px;"></div>`;
-    }).join("");
+// régi IOB grafikon kikapcsolva
 }
 setInterval(updateIOB,5000);
 
@@ -459,44 +453,57 @@ function renderBGPrediction(bgNow){
     const history = getBolusHistory();
     const durationMin = INSULIN_DURATION / 60000;
     const step = 5;
-    const points = [];
+
+    const values = [];
 
     for(let t=0; t<=durationMin; t+=step){
-        let totalEffect = 0;
+        let insulinSum = 0;
 
         history.forEach(b=>{
             const elapsed = (Date.now() - b.time)/60000 + t;
-            totalEffect += b.units * insulinEffectLinear(elapsed, durationMin);
+            insulinSum += b.units * insulinEffectLinear(elapsed, durationMin);
         });
 
-        points.push(bgNow - totalEffect * s.isf);
+        values.push(bgNow - insulinSum * s.isf);
     }
 
     const baseline = bgNow;
-    const min = Math.min(...points, baseline);
-    const max = Math.max(...points, baseline);
-    const range = Math.max(0.5, max - min);
+    const min = Math.min(...values);
+    const max = Math.max(baseline, min);
+    const range = Math.max(1, max - min);
 
-    chart.innerHTML = points.map(v=>{
-        const offset = ((baseline - v) / range) * 30;
-        const height = Math.abs(offset) + 4;
-        const top = offset >= 0 ? 30 - offset : 30;
+    chart.innerHTML = `
+        <div style="position:relative;height:80px">
+            ${values.map(v=>{
+                const y = ((baseline - v) / range) * 40;
+                return `<div style="
+                    position:absolute;
+                    bottom:40px;
+                    left:${values.indexOf(v)*4}px;
+                    width:3px;
+                    height:${Math.abs(y)}px;
+                    background:#355B48;
+                    transform:translateY(${y>0?-y:0}px);
+                "></div>`;
+            }).join("")}
 
-        return `
-        <div style="
-            display:inline-block;
-            width:3px;
-            height:${height}px;
-            margin-right:1px;
-            background:#355B48;
-            transform:translateY(${top}px);
-        "></div>`;
-    }).join("");
+            <div style="
+                position:absolute;
+                bottom:40px;
+                left:0;
+                right:0;
+                height:1px;
+                background:#AAA;
+            "></div>
+        </div>
+    `;
 }
+
 
 </script>
 
 </body>
 </html>
+
 
 
