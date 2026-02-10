@@ -334,9 +334,13 @@ injectBtn.style.display=cancelBtn.style.display="block";
 }
 
 function inject(){
-saveBolus(lastBolus,parseFloat(carbs.value),parseFloat(bg.value));
-cancel();updateIOB();renderHistory();renderFullHistory();
+    saveBolus(lastBolus, parseFloat(carbs.value), parseFloat(bg.value));
+    cancel();
+    updateIOB();
+    renderHistory();      // ez frissíti az utolsó 10 előzményt
+    renderFullHistory();  // ez frissíti az 1 hónapos előzményt
 }
+
 function cancel(){
 result.innerHTML="";
 injectBtn.style.display=cancelBtn.style.display="none";
@@ -360,12 +364,14 @@ return `
 }
 
 function renderHistory(){
-const h=getBolusHistory().slice(-10).reverse();
-  const historyDiv = document.getElementById("history"); // biztos id
-history.innerHTML=h.length?h.map(historyRow).join(""):"<span class='small'>Nincs adat</span>";
+    const h = getBolusHistory().slice(-10).reverse(); // utolsó 10 elem
+    const historyDiv = document.getElementById("history"); // biztos ID
+    historyDiv.innerHTML = h.length
+        ? h.map(historyRow).join("")
+        : "<span class='small'>Nincs adat</span>";
 }
 
-function renderFullHistory(){
+  function renderFullHistory(){
 const monthAgo=Date.now()-30*24*60*60*1000;
 const h=getBolusHistory().filter(b=>b.time>=monthAgo).reverse();
 fullHistory.innerHTML=h.length?h.map(historyRow).join(""):"<span class='small'>Nincs adat</span>";
@@ -384,21 +390,26 @@ if(t.dataset.tab==="log")renderFullHistory();
 });
 
 /* INIT */
-window.onload=()=>{
-loadSettings();
-updateIOB();
-renderHistory();
-renderFullHistory();
-splash.addEventListener("animationend",()=>{
-splash.style.display="none";
-document.querySelector("main").style.display="block";
-tabBar.style.display="flex";
-});
+window.onload = () => {
+    loadSettings();
+    updateIOB();
+    renderHistory();       // utolsó 10
+    renderFullHistory();   // 1 hónap
+    splash.addEventListener("animationend", () => {
+        splash.style.display = "none";
+        document.querySelector("main").style.display = "block";
+        tabBar.style.display = "flex";
+    });
 };
+  document.addEventListener("DOMContentLoaded", () => {
+    renderHistory();
+    renderFullHistory();
+});
 </script>
 
 </body>
 </html>
+
 
 
 
