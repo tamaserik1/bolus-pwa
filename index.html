@@ -123,21 +123,11 @@ font-size:13px;
 margin-right:6px;
 }
 
-.pill.insulin{
-background:var(--pill-ins-bg);
-color:var(--pill-ins-tx);
-}
-.pill.carb{
-background:var(--pill-carb-bg);
-color:var(--pill-carb-tx);
-}
+.pill.insulin{background:var(--pill-ins-bg);color:var(--pill-ins-tx)}
+.pill.carb{background:var(--pill-carb-bg);color:var(--pill-carb-tx)}
+.pill.bg{background:rgba(160,140,120,.20);color:#5A4635}
 
 .small{font-size:13px;color:var(--muted)}
-
-.pill.bg{
-background:rgba(160,140,120,.20);
-color:#5A4635;
-}
 
 #tabBar{
 position:fixed;
@@ -157,15 +147,10 @@ align-items:center;
 font-size:13px;
 color:var(--muted);
 }
-
 .tab.active{color:var(--text)}
-
 .tab svg{
-width:22px;
-height:22px;
-stroke:currentColor;
-fill:none;
-stroke-width:1.6;
+width:22px;height:22px;
+stroke:currentColor;fill:none;stroke-width:1.6;
 margin-bottom:4px;
 }
 </style>
@@ -197,7 +182,7 @@ Betöltés…
 <h3>Aktív inzulin</h3>
 <div id="iob"></div>
 <div id="iobChart" style="margin-top:10px;height:60px;"></div>
-<div id="bgChart" style="margin-top:12px;height:80px;"></div>
+<div id="bgPredictionChart" style="margin-top:12px;height:80px;"></div>
 </div>
 
 <div class="box">
@@ -249,79 +234,61 @@ let INSULIN_DURATION=180*60*1000;
 
 function getBolusHistory(){return JSON.parse(localStorage.getItem("boluses")||"[]");}
 
-function iobTriangular(units,startTime,duration){
-const now=Date.now();
-const d=(now-startTime)/60000;
-if(d<0||d>=duration)return 0;
-const peak=duration/2;
-if(d<=peak)return units*(d/peak);
-return units*((duration-d)/peak);
+function iobLinear(units,start,dur){
+const e=(Date.now()-start)/60000;
+if(e<0||e>=dur)return 0;
+return units*(1-e/dur);
 }
 
 function calcIOB(){
-let total=0;
+let t=0,r=0;
 getBolusHistory().forEach(b=>{
-total+=iobTriangular(b.units,b.time,INSULIN_DURATION/60000);
+const i=iobLinear(b.units,b.time,INSULIN_DURATION/60000);
+t+=i;
+r=Math.max(r,b.time+INSULIN_DURATION-Date.now());
 });
-return{total};
+return{total:t,remaining:r};
+}
+
+function updateIOB(){
+const {total,remaining}=calcIOB();
+iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br><span class="small">${Math.ceil(remaining/60000)} perc</span>`;
 }
 
 function calculate(){
-const carbsVal=parseFloat(carbs.value);
 const bgVal=parseFloat(bg.value);
 const s=JSON.parse(localStorage.getItem("settings")||"{}");
-if([carbsVal,bgVal,s.cr,s.target,s.isf].some(v=>isNaN(v))){
-alert("Hiányzó adat!");
-return;
-}
-
-const mealBolus=carbsVal/s.cr;
-const rawCorr=(bgVal-s.target)/s.isf;
-const iobVal=calcIOB().total;
-const corr=Math.max(0,rawCorr-iobVal);
-
-lastBolus=mealBolus+corr;
-
-result.innerHTML=`<strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
-injectBtn.style.display=cancelBtn.style.display="block";
-
+if(isNaN(bgVal)||!s.isf)return;
 renderBGPrediction(bgVal);
 }
 
-/* ===== BG PREDIKCIÓ ===== */
-
-function insulinEffectFraction(t,d){
-if(t<0||t>d)return 0;
-const p=d/2;
-return t<=p?t/p:(d-t)/p;
-}
-
-function predictBGCurve(bgNow){
+function renderBGPrediction(bgNow){
 const s=JSON.parse(localStorage.getItem("settings")||"{}");
 const d=INSULIN_DURATION/60000;
-const hist=getBolusHistory();
 const pts=[];
 for(let t=0;t<=d;t+=5){
 let eff=0;
-hist.forEach(b=>{
+getBolusHistory().forEach(b=>{
 const e=(Date.now()-b.time)/60000+t;
-eff+=b.units*insulinEffectFraction(e,d);
+eff+=iobLinear(b.units,b.time,d);
 });
 pts.push(bgNow-eff*s.isf);
 }
-return pts;
-}
-
-function renderBGPrediction(bgNow){
-const data=predictBGCurve(bgNow);
-const max=Math.max(...data,bgNow);
-const min=Math.min(...data,bgNow);
-const r=Math.max(1,max-min);
-bgChart.innerHTML=data.map(v=>{
-const h=((v-min)/r)*70+5;
+const min=Math.min(...pts),max=Math.max(...pts),rng=max-min||1;
+bgPredictionChart.innerHTML=pts.map(v=>{
+const h=((v-min)/rng)*70+5;
 return `<div style="display:inline-block;width:3px;height:${h}px;background:#355B48;margin-right:1px"></div>`;
 }).join("");
 }
+
+window.onload=()=>{
+updateIOB();
+splash.addEventListener("animationend",()=>{
+splash.style.display="none";
+document.querySelector("main").style.display="block";
+tabBar.style.display="flex";
+});
+};
 </script>
 
 </body>
