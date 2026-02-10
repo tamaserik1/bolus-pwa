@@ -312,6 +312,12 @@ function iobLinear(units, startTime, duration){
     return units * (1 - elapsed/duration);
 }
 
+    function insulinEffectLinear(elapsedMin, durationMin){
+    if(elapsedMin <= 0) return 0;
+    if(elapsedMin >= durationMin) return 0;
+    return 1 - (elapsedMin / durationMin);
+}
+    
 function calcIOB(detailed=false){
     const now = Date.now();
     let total = 0;
@@ -460,7 +466,7 @@ function renderBGPrediction(bgNow){
         let insulinSum = 0;
 
         history.forEach(b=>{
-            const elapsed = (Date.now() - b.time)/60000 + t;
+            const elapsed = t;
             insulinSum += b.units * insulinEffectLinear(elapsed, durationMin);
         });
 
@@ -504,6 +510,7 @@ function renderBGPrediction(bgNow){
 
 </body>
 </html>
+
 
 
 
