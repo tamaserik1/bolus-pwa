@@ -333,16 +333,35 @@ function calcIOB() {
 }
 
 function calculate(){
-  const iobVal = calcIOB().total;
-const corrBolus = Math.max(0, rawCorrBolus - iobVal);
-lastBolus = mealBolus + corrBolus; 
-  const carbsVal = parseFloat(carbs.value);
+    const carbsVal = parseFloat(carbs.value);
     const bgVal = parseFloat(bg.value);
     const s = JSON.parse(localStorage.getItem("settings") || "{}");
     if([carbsVal,bgVal,s.cr,s.target,s.isf].some(v=>isNaN(v))){
         alert("Hiányzó adat!");
         return;
     }
+
+    // Meal bolus
+    const mealBolus = carbsVal / s.cr;
+
+    // Correction bolus BEFORE IOB
+    const rawCorrBolus = bgVal >= s.target
+        ? (bgVal - s.target) / s.isf
+        : 0;
+
+    // IOB (active insulin from previous boluses, görbe alapú)
+    const iobVal = calcIOB().total;
+
+    // Subtract IOB from correction ONLY
+    const corrBolus = Math.max(0, rawCorrBolus - iobVal);
+
+    // Total recommended
+    lastBolus = mealBolus + corrBolus;
+
+    result.innerHTML = `<strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
+    injectBtn.style.display = cancelBtn.style.display = "block";
+}
+
 
     // Meal bolus
     const mealBolus = carbsVal / s.cr;
@@ -441,6 +460,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
