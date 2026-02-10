@@ -361,6 +361,7 @@ return `
 
 function renderHistory(){
 const h=getBolusHistory().slice(-10).reverse();
+  const historyDiv = document.getElementById("history"); // biztos id
 history.innerHTML=h.length?h.map(historyRow).join(""):"<span class='small'>Nincs adat</span>";
 }
 
@@ -398,5 +399,6 @@ tabBar.style.display="flex";
 
 </body>
 </html>
+
 
 
