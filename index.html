@@ -458,9 +458,10 @@ function renderBGPrediction(bgNow){
 
     const history = getBolusHistory();
     const durationMin = INSULIN_DURATION / 60000;
+    const step = 5;
     const points = [];
 
-    for(let t=0; t<=durationMin; t+=5){
+    for(let t=0; t<=durationMin; t+=step){
         let totalEffect = 0;
 
         history.forEach(b=>{
@@ -468,17 +469,28 @@ function renderBGPrediction(bgNow){
             totalEffect += b.units * insulinEffectLinear(elapsed, durationMin);
         });
 
-        const predictedBG = bgNow - totalEffect * s.isf;
-        points.push(predictedBG);
+        points.push(bgNow - totalEffect * s.isf);
     }
 
-    const min = Math.min(...points);
-    const max = Math.max(...points);
-    const range = Math.max(1, max - min);
+    const baseline = bgNow;
+    const min = Math.min(...points, baseline);
+    const max = Math.max(...points, baseline);
+    const range = Math.max(0.5, max - min);
 
     chart.innerHTML = points.map(v=>{
-        const h = ((v - min) / range) * 70 + 5;
-        return `<div style="display:inline-block;width:3px;height:${h}px;background:#355B48;margin-right:1px"></div>`;
+        const offset = ((baseline - v) / range) * 30;
+        const height = Math.abs(offset) + 4;
+        const top = offset >= 0 ? 30 - offset : 30;
+
+        return `
+        <div style="
+            display:inline-block;
+            width:3px;
+            height:${height}px;
+            margin-right:1px;
+            background:#355B48;
+            transform:translateY(${top}px);
+        "></div>`;
     }).join("");
 }
 
@@ -486,4 +498,5 @@ function renderBGPrediction(bgNow){
 
 </body>
 </html>
+
 
