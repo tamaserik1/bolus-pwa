@@ -23,37 +23,18 @@
 --pill-ins-tx:#3B4A5A;
 --pill-carb-bg:rgba(120,160,140,.20);
 --pill-carb-tx:#355B48;
---pill-bg-bg:rgba(160,160,160,.22);
---pill-bg-tx:#444;
-}
-
-@media (prefers-color-scheme: dark){
-:root{
---bg:#1F2123;
---card:#2A2C2F;
---text:#E6E6E6;
---muted:#A0A0A0;
---soft:#3A3C40;
---accent:#3A3C40;
-
---pill-ins-bg:rgba(120,140,160,.35);
---pill-ins-tx:#DCE6F0;
---pill-carb-bg:rgba(120,160,140,.35);
---pill-carb-tx:#DDEFE5;
---pill-bg-bg:rgba(180,180,180,.30);
---pill-bg-tx:#EEE;
-}
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{
-font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+
+html,body{
+height:100%;
+font-family:-apple-system,BlinkMacSystemFont,"SF Pro",system-ui,sans-serif;
 background:var(--bg);
 color:var(--text);
-display:flex;
-flex-direction:column;
 }
+
+body{display:flex;flex-direction:column}
 
 #splash{
 position:fixed;inset:0;
@@ -65,11 +46,17 @@ align-items:center;
 font-size:22px;
 font-weight:600;
 z-index:9999;
+animation:fadeOut 1.2s ease forwards;
+animation-delay:1.2s;
 }
-
 #splash img{width:110px;margin-bottom:16px}
+@keyframes fadeOut{to{opacity:0;pointer-events:none}}
 
-main{display:none;flex:1;padding:18px;padding-bottom:92px}
+main{
+flex:1;
+padding:18px;
+padding-bottom:92px;
+}
 section{display:none}
 section.active{display:block}
 
@@ -78,11 +65,23 @@ background:var(--card);
 padding:20px;
 margin-bottom:20px;
 border-radius:22px;
-box-shadow:0 10px 25px rgba(0,0,0,.06),0 4px 10px rgba(0,0,0,.04);
+box-shadow:
+0 10px 25px rgba(0,0,0,.06),
+0 4px 10px rgba(0,0,0,.04);
 }
 
-h3{font-size:17px;margin-bottom:10px}
-label{display:block;margin-top:16px;font-size:14px;color:var(--muted)}
+h3{
+font-size:17px;
+margin-bottom:10px;
+font-weight:600;
+}
+
+label{
+display:block;
+margin-top:16px;
+font-size:14px;
+color:var(--muted);
+}
 
 input{
 width:100%;
@@ -92,23 +91,29 @@ font-size:17px;
 border:none;
 border-radius:15px;
 background:var(--soft);
-color:var(--text);
 }
 
+/* ===== MINIMALISTA GOMBOK – FIX ===== */
 button{
 margin-top:18px;
 width:100%;
-padding:15px;
-font-size:17px;
+padding:14px;
+font-size:16px;
 border:none;
-border-radius:15px;
-background:var(--accent);
+border-radius:999px;
+background:rgba(0,0,0,.04);
 color:var(--text);
+font-weight:600;
 }
-.secondary{background:var(--soft)}
-.danger{background:#E0B4B4}
+button:active{transform:scale(.97)}
+.secondary{background:rgba(0,0,0,.03)}
+.danger{background:rgba(180,80,80,.18)}
 
-.history-item{padding:12px 0}
+.history-item{
+padding:12px 0;
+font-size:15px;
+line-height:1.45;
+}
 
 .pill{
 display:inline-block;
@@ -118,17 +123,24 @@ font-weight:600;
 font-size:13px;
 margin-right:6px;
 }
-.insulin{background:var(--pill-ins-bg);color:var(--pill-ins-tx)}
-.carb{background:var(--pill-carb-bg);color:var(--pill-carb-tx)}
-.bg{background:var(--pill-bg-bg);color:var(--pill-bg-tx)}
+
+.pill.insulin{
+background:var(--pill-ins-bg);
+color:var(--pill-ins-tx);
+}
+.pill.carb{
+background:var(--pill-carb-bg);
+color:var(--pill-carb-tx);
+}
 
 .small{font-size:13px;color:var(--muted)}
 
 #tabBar{
-position:fixed;bottom:0;left:0;right:0;
+position:fixed;
+bottom:0;left:0;right:0;
 height:72px;
 background:var(--card);
-display:none;
+display:flex;
 border-top:1px solid var(--accent);
 }
 
@@ -141,8 +153,17 @@ align-items:center;
 font-size:13px;
 color:var(--muted);
 }
+
 .tab.active{color:var(--text)}
-.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;margin-bottom:4px}
+
+.tab svg{
+width:22px;
+height:22px;
+stroke:currentColor;
+fill:none;
+stroke-width:1.6;
+margin-bottom:4px;
+}
 </style>
 </head>
 
@@ -153,7 +174,7 @@ color:var(--muted);
 Betöltés…
 </div>
 
-<main>
+<main style="display:none">
 
 <section id="home" class="active">
 <div class="box">
@@ -180,7 +201,7 @@ Betöltés…
 
 <div class="box small">
 Ez az alkalmazás nem minősül orvosi eszköznek.<br>
-A számítások tájékoztató jellegűek, nem helyettesítik az orvosi döntést.
+A számítások tájékoztató jellegűek.
 </div>
 </section>
 
@@ -195,11 +216,11 @@ A számítások tájékoztató jellegűek, nem helyettesítik az orvosi döntés
 <div class="box">
 <h3>Beállítások</h3>
 <label>Szénhidrát–inzulin arány</label>
-<input id="cr" type="number">
+<input id="cr" type="number" step="0.1">
 <label>Cél vércukor</label>
-<input id="target" type="number" value="5.5">
+<input id="target" type="number" step="0.1" value="5.5">
 <label>Inzulinérzékenység</label>
-<input id="isf" type="number">
+<input id="isf" type="number" step="0.1">
 <label>Hatásidő (perc)</label>
 <input id="duration" type="number" value="180">
 <button onclick="saveSettings()">Mentés</button>
@@ -209,18 +230,19 @@ A számítások tájékoztató jellegűek, nem helyettesítik az orvosi döntés
 
 </main>
 
-<div id="tabBar">
-<div class="tab active" data-tab="home">🏠<div>Kezdő</div></div>
-<div class="tab" data-tab="log">📖<div>Napló</div></div>
-<div class="tab" data-tab="settings">⚙️<div>Beáll.</div></div>
+<div id="tabBar" style="display:none">
+<div class="tab active" data-tab="home">Kezdőoldal</div>
+<div class="tab" data-tab="log">Napló</div>
+<div class="tab" data-tab="settings">Beállítások</div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
 let lastBolus=null;
-let INSULIN_DURATION=180*60000;
+let INSULIN_DURATION=180*60*1000;
 const HYPO_LIMIT=4;
 
+/* SETTINGS */
 function saveSettings(){
 const s={cr:+cr.value,target:+target.value,isf:+isf.value,duration:+duration.value};
 localStorage.setItem("settings",JSON.stringify(s));
@@ -235,6 +257,7 @@ if(s.isf)isf.value=s.isf;
 if(s.duration){duration.value=s.duration;INSULIN_DURATION=s.duration*60000;}
 }
 
+/* STORAGE */
 function getBolusHistory(){return JSON.parse(localStorage.getItem("boluses")||"[]");}
 function saveBolus(units,carbs,bg){
 const h=getBolusHistory();
@@ -242,25 +265,30 @@ h.push({units,carbs,bg,time:Date.now()});
 localStorage.setItem("boluses",JSON.stringify(h));
 }
 
+/* IOB – FIX: NEM TÖRÖL HISTORY-T */
 function calcIOB(){
-const now=Date.now();let total=0,remaining=0,valid=[];
+const now=Date.now();
+let total=0,remaining=0;
 getBolusHistory().forEach(b=>{
 const e=now-b.time;
 if(e<INSULIN_DURATION){
 const r=1-e/INSULIN_DURATION;
 total+=b.units*r;
 remaining=Math.max(remaining,INSULIN_DURATION-e);
-valid.push(b);
 }
 });
-localStorage.setItem("boluses",JSON.stringify(valid));
 return {total,remaining};
 }
 
+/* CALC */
 function calculate(){
-const carbsVal=+carbs.value,bgVal=+bg.value;
+const carbsVal=parseFloat(carbs.value);
+const bgVal=parseFloat(bg.value);
 const s=JSON.parse(localStorage.getItem("settings")||"{}");
-if([carbsVal,bgVal,s.cr,s.target,s.isf].some(v=>isNaN(v)))return alert("Hiányzó adat!");
+if([carbsVal,bgVal,s.cr,s.target,s.isf].some(v=>isNaN(v))){
+alert("Hiányzó adat!");
+return;
+}
 const {total:iob}=calcIOB();
 const meal=carbsVal/s.cr;
 const corr=bgVal>=HYPO_LIMIT?Math.max(0,(bgVal-s.target)/s.isf-iob):0;
@@ -270,7 +298,7 @@ injectBtn.style.display=cancelBtn.style.display="block";
 }
 
 function inject(){
-saveBolus(lastBolus,+carbs.value,+bg.value);
+saveBolus(lastBolus,parseFloat(carbs.value),parseFloat(bg.value));
 cancel();updateIOB();renderHistory();renderFullHistory();
 }
 function cancel(){
@@ -278,18 +306,21 @@ result.innerHTML="";
 injectBtn.style.display=cancelBtn.style.display="none";
 }
 
+/* UI */
 function updateIOB(){
 const {total,remaining}=calcIOB();
-iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br><span class="small">Hátralévő idő: ${Math.ceil(remaining/60000)} perc</span>`;
+iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br>
+<span class="small">Hátralévő idő: ${Math.ceil(remaining/60000)} perc</span>`;
 }
 
 function historyRow(b){
 return `
 <div class="history-item">
 <span class="pill insulin">${b.units.toFixed(2)} E</span>
-<span class="pill carb">${b.carbs} g CH</span>
-<span class="pill bg">${b.bg} mmol/L</span><br>
-<span class="small">${new Date(b.time).toLocaleString()}</span>
+<span class="pill carb">${b.carbs} g CH</span><br>
+<span class="small">
+BG: ${b.bg} mmol/L • ${new Date(b.time).toLocaleString()}
+</span>
 </div>`;
 }
 
@@ -297,42 +328,37 @@ function renderHistory(){
 const h=getBolusHistory().slice(-10).reverse();
 history.innerHTML=h.length?h.map(historyRow).join(""):"<span class='small'>Nincs adat</span>";
 }
+
 function renderFullHistory(){
-const m=Date.now()-30*24*60*60*1000;
-const h=getBolusHistory().filter(b=>b.time>=m).reverse();
+const monthAgo=Date.now()-30*24*60*60*1000;
+const h=getBolusHistory().filter(b=>b.time>=monthAgo).reverse();
 fullHistory.innerHTML=h.length?h.map(historyRow).join(""):"<span class='small'>Nincs adat</span>";
 }
 
+/* TABS */
 document.querySelectorAll(".tab").forEach(t=>{
 t.onclick=()=>{
 document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
 t.classList.add("active");
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 $(t.dataset.tab).classList.add("active");
+if(t.dataset.tab==="home")renderHistory();
+if(t.dataset.tab==="log")renderFullHistory();
 };
 });
 
+/* INIT */
 window.onload=()=>{
 loadSettings();
 updateIOB();
 renderHistory();
 renderFullHistory();
-setTimeout(()=>{
+splash.addEventListener("animationend",()=>{
 splash.style.display="none";
 document.querySelector("main").style.display="block";
 tabBar.style.display="flex";
-},1500);
+});
 };
-
-function resetAll(){
-if(confirm("Biztos törlöd az összes adatot?")){
-localStorage.clear();location.reload();
-}
-}
-
-if("serviceWorker"in navigator){
-navigator.serviceWorker.register("sw.js");
-}
 </script>
 
 </body>
