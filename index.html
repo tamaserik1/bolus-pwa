@@ -23,6 +23,9 @@
 --pill-ins-tx:#3B4A5A;
 --pill-carb-bg:rgba(120,160,140,.20);
 --pill-carb-tx:#355B48;
+--pill-bg-bg:rgba(160,140,120,.20);
+--pill-bg-tx:#5A4635;
+--hypo:#B45050;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -136,8 +139,15 @@ color:var(--pill-carb-tx);
 .small{font-size:13px;color:var(--muted)}
 
 .pill.bg{
-background:rgba(160,140,120,.20);
-color:#5A4635;
+background:var(--pill-bg-bg);
+color:var(--pill-bg-tx);
+}
+
+canvas.chart{
+display:block;
+width:100%;
+height:90px;
+margin-top:12px;
 }
 
 #tabBar{
@@ -197,9 +207,11 @@ Betöltés…
 <div class="box">
 <h3>Aktív inzulin</h3>
 <div id="iob"></div>
-<!-- <div id="iobChart" style="margin-top:10px; height:60px;"></div> -->
-<div id="bgPredictionChart" style="margin-top:14px;height:80px;"></div>
+<canvas id="iobChart" class="chart"></canvas>
 
+<h3 style="margin-top:20px">Várható vércukor</h3>
+<canvas id="bgPredictionChart" class="chart"></canvas>
+<div id="bgPredictionHint" class="small" style="margin-top:6px"></div>
 </div>
 
 <div class="box">
@@ -271,6 +283,7 @@ Beállítások
 <script>
 const $=id=>document.getElementById(id);
 let lastBolus=null;
+let lastBgForPrediction=null;
 let INSULIN_DURATION=180*60*1000;
 const HYPO_LIMIT=4;
 
@@ -280,6 +293,7 @@ const s={cr:+cr.value,target:+target.value,isf:+isf.value,duration:+duration.val
 localStorage.setItem("settings",JSON.stringify(s));
 INSULIN_DURATION=s.duration*60000;
 alert("Beállítások mentve");
+updateIOB();
 }
 function loadSettings(){
 const s=JSON.parse(localStorage.getItem("settings")||"{}");
@@ -304,68 +318,47 @@ localStorage.removeItem("settings");
 location.reload();
 }
 
-/* IOB – lineáris csökkenő és vizualizáció */
-function iobLinear(units, startTime, duration){
+/* IOB – lineáris csökkenő */
+function iobLinear(units, startTime, durationMin){
     const now = Date.now();
-    const elapsed = (now - startTime)/60000; // perc
-    if(elapsed < 0 || elapsed >= duration) return 0;
-    return units * (1 - elapsed/duration);
+    const elapsed = (now - startTime)/60000;
+    if(elapsed < 0 || elapsed >= durationMin) return 0;
+    return units * (1 - elapsed/durationMin);
 }
 
-    function insulinEffectLinear(elapsedMin, durationMin){
-    if(elapsedMin <= 0) return 0;
-    if(elapsedMin >= durationMin) return 0;
-    return 1 - (elapsedMin / durationMin);
+// IOB tetszőleges t időpontban (grafikonhoz)
+function iobAtTime(t, boluses, durationMin){
+    let total = 0;
+    boluses.forEach(b=>{
+        const elapsed = (t - b.time)/60000;
+        if(elapsed >= 0 && elapsed < durationMin){
+            total += b.units * (1 - elapsed/durationMin);
+        }
+    });
+    return total;
 }
-    
-function calcIOB(detailed=false){
+
+function calcIOB(){
     const now = Date.now();
     let total = 0;
     let remaining = 0;
-    const points = [];
-
     getBolusHistory().forEach(b=>{
-        const iob = iobLinear(b.units, b.time, INSULIN_DURATION/60000);
-        total += iob;
+        total += iobLinear(b.units, b.time, INSULIN_DURATION/60000);
         const rem = b.time + INSULIN_DURATION - now;
         if(rem > remaining) remaining = rem;
-
-        if(detailed){
-            const durationMin = INSULIN_DURATION/60000;
-            for(let t=0; t<=durationMin; t+=5){
-                points.push({
-                    time: b.time + t*60000,
-                    value: iobLinear(b.units, b.time, durationMin)
-                });
-            }
-        }
     });
-
-    return detailed ? { total, remaining, points } : { total, remaining };
+    return { total, remaining };
 }
 
 function updateIOB(){
-    const { total, remaining, points } = calcIOB(true);
+    const { total, remaining } = calcIOB();
     iob.innerHTML=`<strong>${total.toFixed(2)} E</strong><br>
     <span class="small">Hátralévő idő: ${Math.ceil(remaining/60000)} perc</span>`;
-
-// régi IOB grafikon kikapcsolva
+    drawIOBChart();
+    if(lastBgForPrediction!=null) renderBGPrediction(lastBgForPrediction);
 }
 setInterval(updateIOB,5000);
 
-    function insulinActionTriangular(t, D){
-    const Tpeak = D * 0.4;
-
-    if(t <= 0 || t >= D) return 0;
-
-    if(t <= Tpeak){
-        return t / Tpeak;                 // felfutás
-    } else {
-        return (D - t) / (D - Tpeak);     // lefutás
-    }
-}
-
-    
 /* CALCULATION */
 function calculate(){
     const carbsVal = parseFloat(carbs.value);
@@ -384,6 +377,8 @@ function calculate(){
 
     result.innerHTML = `<strong>Javasolt: ${lastBolus.toFixed(2)} E</strong>`;
     injectBtn.style.display = cancelBtn.style.display = "block";
+
+    lastBgForPrediction = bgVal;
     renderBGPrediction(bgVal);
 }
 
@@ -434,7 +429,11 @@ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
 t.classList.add("active");
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 $(t.dataset.tab).classList.add("active");
-if(t.dataset.tab==="home")renderHistory();
+if(t.dataset.tab==="home"){
+    renderHistory();
+    drawIOBChart();
+    if(lastBgForPrediction!=null) renderBGPrediction(lastBgForPrediction);
+}
 if(t.dataset.tab==="log")renderFullHistory();
 };
 });
@@ -449,114 +448,190 @@ window.onload = () => {
         splash.style.display = "none";
         document.querySelector("main").style.display = "block";
         tabBar.style.display = "flex";
+        drawIOBChart();
     });
 };
 document.addEventListener("DOMContentLoaded", () => {
     renderHistory();
     renderFullHistory();
 });
-    /* ===== BG PREDIKCIÓS GRAFIKON ===== */
 
-function insulinEffectLinear(elapsedMin, durationMin){
-    if(elapsedMin < 0 || elapsedMin > durationMin) return 0;
-    return 1 - (elapsedMin / durationMin);
+window.addEventListener("resize", () => {
+    drawIOBChart();
+    if(lastBgForPrediction!=null) renderBGPrediction(lastBgForPrediction);
+});
+
+/* ===== ÁLTALÁNOS VONALDIAGRAM (canvas) ===== */
+function niceCeil(x){
+    if(x<=0) return 1;
+    const pow=Math.pow(10,Math.floor(Math.log10(x)));
+    const norm=x/pow;
+    let n; if(norm<=1)n=1; else if(norm<=2)n=2; else if(norm<=5)n=5; else n=10;
+    return n*pow;
 }
 
-    function calculateBGCurve(bgStart){
+function drawLineChart(canvas, points, opts={}){
+    if(!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = canvas.clientWidth;
+    const cssHeight = canvas.clientHeight;
+    if(!cssWidth || !cssHeight) return;
+    canvas.width = cssWidth*dpr;
+    canvas.height = cssHeight*dpr;
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,cssWidth,cssHeight);
+    if(points.length===0) return;
+
+    const values = points.map(p=>p.v);
+    let yMin = opts.yMin ?? Math.min(0, ...values);
+    let yMax = opts.yMax ?? Math.max(...values);
+    if(opts.threshold!=null){
+        yMin = Math.min(yMin, opts.threshold);
+        yMax = Math.max(yMax, opts.threshold);
+    }
+    if(yMax - yMin < 0.5) yMax = yMin + 0.5;
+    const pad = (yMax-yMin)*0.15;
+    yMax += pad;
+    if(opts.yMin==null) yMin -= pad*0.4;
+
+    const start = points[0].t, end = points[points.length-1].t;
+    const totalRange = (end-start) || 1;
+    const padL=32, padR=6, padT=8, padB=18;
+    const w=cssWidth-padL-padR, h=cssHeight-padT-padB;
+    const xPos=t=>padL+((t-start)/totalRange)*w;
+    const yPos=v=>padT+h-((v-yMin)/(yMax-yMin))*h;
+
+    const border="#E7E7E5", sub="#9A9A9A";
+    ctx.font="10px -apple-system, sans-serif";
+
+    ctx.strokeStyle=border; ctx.fillStyle=sub; ctx.lineWidth=1;
+    [yMin+pad*0.4, (yMin+yMax)/2, yMax-pad].forEach(v=>{
+        const y=yPos(v);
+        ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+w,y); ctx.stroke();
+        ctx.fillText(v.toFixed(opts.decimals ?? 2), 2, y+3);
+    });
+
+    ctx.textAlign="center";
+    const fmt=t=>new Date(t).toLocaleTimeString("hu-HU",{hour:"2-digit",minute:"2-digit"});
+    ctx.fillText(fmt(start), xPos(start), cssHeight-4);
+    if(opts.now!=null && opts.now>=start && opts.now<=end) ctx.fillText("most", xPos(opts.now), cssHeight-4);
+    ctx.fillText(fmt(end), xPos(end), cssHeight-4);
+    ctx.textAlign="left";
+
+    if(opts.threshold!=null){
+        ctx.save();
+        ctx.setLineDash([3,3]);
+        ctx.strokeStyle = opts.thresholdColor || "#B45050";
+        ctx.beginPath();
+        ctx.moveTo(padL, yPos(opts.threshold));
+        ctx.lineTo(padL+w, yPos(opts.threshold));
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(xPos(points[0].t), yPos(Math.max(yMin,0)));
+    points.forEach(p=>ctx.lineTo(xPos(p.t), yPos(p.v)));
+    ctx.lineTo(xPos(points[points.length-1].t), yPos(Math.max(yMin,0)));
+    ctx.closePath();
+    ctx.fillStyle=(opts.color||"#3B4A5A")+"22";
+    ctx.fill();
+
+    ctx.beginPath();
+    points.forEach((p,i)=>{
+        const x=xPos(p.t), y=yPos(p.v);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle=opts.color||"#3B4A5A";
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    if(opts.now!=null){
+        const nowClamped = Math.min(Math.max(opts.now, start), end);
+        const nowX = xPos(nowClamped);
+        ctx.save();
+        ctx.setLineDash([3,3]);
+        ctx.strokeStyle=sub;
+        ctx.beginPath();
+        ctx.moveTo(nowX, padT);
+        ctx.lineTo(nowX, padT+h);
+        ctx.stroke();
+        ctx.restore();
+
+        let nowVal = points[0].v;
+        for(const p of points){ if(p.t<=opts.now) nowVal=p.v; }
+        ctx.beginPath();
+        ctx.arc(nowX, yPos(nowVal), 3.5, 0, Math.PI*2);
+        ctx.fillStyle=opts.color||"#3B4A5A";
+        ctx.fill();
+    }
+}
+
+/* -------- Aktív inzulin grafikon -------- */
+function drawIOBChart(){
+    const canvas = $("iobChart");
+    if(!canvas) return;
+    const boluses = getBolusHistory();
+    const durationMin = INSULIN_DURATION/60000;
+    const now = Date.now();
+
+    let maxRemaining = 0;
+    boluses.forEach(b=>{
+        const expiry = b.time + INSULIN_DURATION;
+        if(expiry>now) maxRemaining = Math.max(maxRemaining, expiry-now);
+    });
+
+    const start = now - INSULIN_DURATION;
+    const end = now + maxRemaining;
+    const steps = 60;
+    const points = [];
+    for(let i=0;i<=steps;i++){
+        const t = start + (end-start)*i/steps;
+        points.push({ t, v: iobAtTime(t, boluses, durationMin) });
+    }
+    drawLineChart(canvas, points, { color:"#3B4A5A", now, decimals:2, yMin:0 });
+}
+
+/* -------- Várható vércukor grafikon -------- */
+function renderBGPrediction(bgNow){
+    const canvas = $("bgPredictionChart");
+    if(!canvas) return;
     const s = JSON.parse(localStorage.getItem("settings") || "{}");
-    if(!s.isf || !s.target) return [];
+    if(!s.isf){ $("bgPredictionHint").textContent=""; return; }
 
     const boluses = getBolusHistory();
-    const D = INSULIN_DURATION / 60000;
-    const step = 5;
+    const durationMin = INSULIN_DURATION/60000;
+    const now = Date.now();
+    const iobNow = iobAtTime(now, boluses, durationMin);
 
-    // teljes várható csökkenés mmol/L-ben
-    let totalInsulin = 0;
-    boluses.forEach(b => totalInsulin += b.units);
-    const totalDrop = totalInsulin * s.isf;
-
-    const curve = [];
-
-    for(let t=0; t<=D; t+=step){
-        let effectSum = 0;
-
-        boluses.forEach(b=>{
-            effectSum += b.units * insulinActionTriangular(t, D);
-        });
-
-        const fraction = effectSum / totalInsulin || 0;
-        const bg = bgStart - fraction * totalDrop;
-
-        curve.push({ t, bg });
+    const steps = 60;
+    const points = [];
+    for(let i=0;i<=steps;i++){
+        const dtMin = durationMin*i/steps;
+        const t = now + dtMin*60000;
+        const iobFuture = iobAtTime(t, boluses, durationMin);
+        // a mostanáig felhasznált (elhasznált) inzulin okozza a vércukor-csökkenést
+        const bg = bgNow - s.isf*(iobNow - iobFuture);
+        points.push({ t, v: bg });
     }
 
-    return curve;
+    drawLineChart(canvas, points, {
+        color:"#5A4635",
+        now,
+        decimals:1,
+        threshold: HYPO_LIMIT,
+        thresholdColor: "#B45050"
+    });
+
+    const minBg = Math.min(...points.map(p=>p.v));
+    const hint = $("bgPredictionHint");
+    hint.textContent = minBg < HYPO_LIMIT
+        ? `Figyelem: a becslés szerint a vércukor ${minBg.toFixed(1)} mmol/L-re eshet.`
+        : `Várható legalacsonyabb érték: ${minBg.toFixed(1)} mmol/L.`;
+    hint.style.color = minBg < HYPO_LIMIT ? "var(--hypo)" : "var(--muted)";
 }
-
-    
-function renderBGPrediction(bgNow){
-    const chart = document.getElementById("bgPredictionChart");
-    if(!chart) return;
-
-    const s = JSON.parse(localStorage.getItem("settings") || "{}");
-    if(!s.isf) return;
-
-    const history = getBolusHistory();
-    const durationMin = INSULIN_DURATION / 60000;
-    const step = 5;
-
-    const values = [];
-
-    for(let t=0; t<=durationMin; t+=step){
-        let insulinSum = 0;
-
-        history.forEach(b=>{
-            const elapsed = t;
-            insulinSum += b.units * insulinEffectLinear(elapsed, durationMin);
-        });
-
-        values.push(bgNow - insulinSum * s.isf);
-    }
-
-    const baseline = bgNow;
-    const min = Math.min(...values);
-    const max = Math.max(baseline, min);
-    const range = Math.max(1, max - min);
-
-    chart.innerHTML = `
-        <div style="position:relative;height:80px">
-            ${values.map(v=>{
-                const y = ((baseline - v) / range) * 40;
-                return `<div style="
-                    position:absolute;
-                    bottom:40px;
-                    left:${values.indexOf(v)*4}px;
-                    width:3px;
-                    height:${Math.abs(y)}px;
-                    background:#355B48;
-                    transform:translateY(${y>0?-y:0}px);
-                "></div>`;
-            }).join("")}
-
-            <div style="
-                position:absolute;
-                bottom:40px;
-                left:0;
-                right:0;
-                height:1px;
-                background:#AAA;
-            "></div>
-        </div>
-    `;
-}
-
-
 </script>
 
 </body>
 </html>
-
-
-
-
-
